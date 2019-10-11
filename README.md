@@ -1,0 +1,2 @@
+# examcheck
+Spreadsheet analysis routines
