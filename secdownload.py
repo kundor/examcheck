@@ -3,9 +3,9 @@
 from canvas import *
 import shutil
 
-assid = 506749 # mod 4 spreadsheet upload
+assid = 506750 # mod 5 spreadsheet upload
 
-savedir = 'mymod4'
+savedir = 'mymod5'
 
 rate = 30
 minrest = 5
