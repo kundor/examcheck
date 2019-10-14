@@ -3,15 +3,14 @@
 from canvas import *
 import sys
 
-quizid = 73848 #mod 4 exam
-
-curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
+quizid = 76902 #mod 5 exam
+altquiz = 79214 # Module 5 Exam (*V*) 
 
 studict = {stu['id'] : stu['name'] for stu in students}
 
-with canvas_session() as s:
+def printgrades(session, curl):
     while curl:
-        with s.get(curl) as response:
+        with session.get(curl) as response:
             subs = response.json()['quiz_submissions']
             curl = response.links['next']['url'] if 'next' in response.links else None
         for sub in subs:
@@ -31,4 +30,10 @@ with canvas_session() as s:
             if not sub['score'].is_integer():
                 print(f'Not integer score {sub["score"]} for {sub["user_id"]}', file=sys.stderr)
             print(f"{stuname}\t{round(sub['score'])}")
+
+with canvas_session() as s:
+    curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
+    printgrades(s, curl)
+    curl = canvasbase + f'courses/{courseid}/quizzes/{altquiz}/submissions'
+    printgrades(s, curl)
 
