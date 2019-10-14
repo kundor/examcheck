@@ -9,7 +9,7 @@ sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='
 rate = 20 # seconds between requests
 minrest = 5 # wait at least this long (if a request took a long time)
 
-assid = 528781  # Module 5 exam
+assids = {528781, 548128}  # Module 5 exam, Module 5 Exam (*V*)
 
 curl = canvasbase + f'audit/grade_change/courses/{courseid}'
 
@@ -27,7 +27,7 @@ with canvas_session() as s:
         signal.signal(signal.SIGINT, deferint)
         with s.get(curl, params={'start_time': dategot}) as response:
             gce = response.json()['events']
-        caught = [f"{stuname[g['links']['student']]}: {g['grade_after']}" for g in gce if g['links']['assignment'] == assid and g['links']['student'] in mystuds]
+        caught = [f"{stuname[g['links']['student']]}: {g['grade_after']}" for g in gce if g['links']['assignment'] in assids and g['links']['student'] in mystuds]
         if caught:
             print('\n'.join(c for c in caught))
             reports.update(caught)
