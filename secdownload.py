@@ -3,16 +3,17 @@
 from canvas import *
 import shutil
 
-assid = 506750 # mod 5 spreadsheet upload
+assids = [506750, # mod 5 spreadsheet upload
+          565063] # mod 5 upload (*V*)
 
 savedir = 'mymod5'
 
-rate = 30
+rate = 15
 minrest = 5
 
 #curls = [canvasbase + f'sections/{secid1}/assignments/{assid}/submissions',
 #         canvasbase + f'sections/{secid}/assignments/{assid}/submissions']
-curl = canvasbase + f'sections/{secid}/assignments/{assid}/submissions'
+curls = [canvasbase + f'sections/{secid}/assignments/{assid}/submissions' for assid in assids]
 
 section = sections[secid]
 #section1 = sections[secid1]
@@ -25,12 +26,14 @@ os.makedirs(savedir, exist_ok=True)
 os.chdir(savedir)
 
 with canvas_session() as s:
+    curi = 0
     while len(dnlds) < len(mystuds):
       try:
         start = time.time()
         signal.signal(signal.SIGINT, deferint)
 
-        with s.get(curl) as r:
+        curi = (curi + 1) % len(curls)
+        with s.get(curls[curi]) as r:
             rj = r.json()
 
         if deferint.nomore:
