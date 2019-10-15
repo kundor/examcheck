@@ -34,6 +34,8 @@ istempfile() {
     [[ -n $tempmsg ]] # return value
 }
 
+ls *.xls* | sed 's/_.*//' | uniq -cd
+
 for f in *xls; do
     if [[ $(file -b --mime-type "$f") == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ]]; then
         echo "$f appears to be an .xlsx file"
