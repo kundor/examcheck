@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 
+import sys
+import IPython
 from canvas import *
+
+sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
 rate = 20 # seconds between requests
 minrest = 5 # wait at least this long (if a request took a long time)
@@ -8,13 +12,14 @@ minrest = 5 # wait at least this long (if a request took a long time)
 curl = canvasbase + f'audit/grade_change/courses/{courseid}'
 
 section = sections[secid]
+
 dategot = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 mystuds = section['students']
-numreports = 0
+reports = set()
 stuname = {stu['id']: stu['name'] for stu in students}
 
 with canvas_session() as s:
-    while numreports < len(mystuds):
+    while len(reports) < len(mystuds):
       try:
         start = time.time()
         signal.signal(signal.SIGINT, deferint)
@@ -23,10 +28,10 @@ with canvas_session() as s:
         gce = rj['events']
         linked = rj['linked']['assignments']
         assname = {l['id']: l['name'] for l in linked}
-        caught = [(stuname[g['links']['student']], assname[g['links']['assignment']], g['grade_after']) for g in gce if g['links']['student'] in mystuds]
+        caught = [f"{stuname[g['links']['student']]}: {assname[g['links']['assignment']]}: {g['grade_after']}" for g in gce if g['links']['student'] in mystuds]
         if caught:
-            print('\n'.join(str(c) for c in caught))
-            numreports += len(caught)
+            print('\n'.join(c for c in caught))
+            reports.update(caught)
 
         dategot = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(start))
         elapsed = time.time() - start
