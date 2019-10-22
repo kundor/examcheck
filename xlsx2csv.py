@@ -9,6 +9,6 @@ for ws in wb.worksheets:
 #    ws.max_row = ws.max_column = None
     ws.reset_dimensions()
     for row in ws.rows:
-        print(','.join(str(c.value) if c.value is not None else '' for c in row))
+        print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','))
     print('----------')
 
