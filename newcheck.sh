@@ -148,6 +148,11 @@ fi
 
 ../clusterfy.py simhashmatch # 0.98
 
+# To find exact duplicates:
+# b2sum -l 192 *.csv | sort | cut -d' ' -f1 | uniq -cd
+# or
+# b2sum -l 192 *.csv | awk '{hnum[$1]++; hash[$1][hnum[$1]] = $2} END {for (h in hnum){if (hnum[h] > 1) {print h, hnum[h]; for (f in hash[h]) {printf "%s ", hash[h][f]}} }}
+# then for f in <paste>; do reportline $f Unmodified; done
 exit
 
 for w in $(cat *.csv | sed 's/[^A-Za-z ]/ /g' | tr -s '[[:space:]]' '\n' | sort | uniq -c | sort -n | awk '1<$1&&$1<20{print $2}')
