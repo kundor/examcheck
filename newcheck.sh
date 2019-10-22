@@ -150,6 +150,13 @@ fi
 
 exit
 
+for w in $(cat *.csv | sed 's/[^A-Za-z ]/ /g' | tr -s '[[:space:]]' '\n' | sort | uniq -c | sort -n | awk '1<$1&&$1<20{print $2}')
+do fct=$(grep -l -w $w *.csv | wc -l)
+   if [[ $fct -gt 1 ]]; then 
+       cho $w in $fct
+   fi
+done
+
 for f in *xlsx; do
     read -srn1 -p "Open $f..."
     libreoffice "$f"
