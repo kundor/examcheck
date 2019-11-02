@@ -151,11 +151,18 @@ fi
 # To find exact duplicates:
 # b2sum -l 192 *.csv | sort | cut -d' ' -f1 | uniq -cd
 # or
-# b2sum -l 192 *.csv | awk '{hnum[$1]++; hash[$1][hnum[$1]] = $2} END {for (h in hnum){if (hnum[h] > 1) {print h, hnum[h]; for (f in hash[h]) {printf "%s ", hash[h][f]}} }}
+# b2sum -l 192 *.csv | awk '{hnum[$1]++; hash[$1][hnum[$1]] = $2} END {for (h in hnum){if (hnum[h] > 1) {print h, hnum[h]; for (f in hash[h]) {printf "%s ", hash[h][f]}; print "";} }}'
 # then for f in <paste>; do reportline $f Unmodified; done
 exit
 
-for w in $(cat *.csv | sed 's/[^A-Za-z ]/ /g' | tr -s '[[:space:]]' '\n' | sort | uniq -c | sort -n | awk '1<$1&&$1<20{print $2}')
+# Better: split on commas instead of all non-A-Za-z characters
+# but maybe replace any \$?[A-Z]{1,2}\$?[0-9]{1,5} with a placeholder like REF
+cat *.csv | sed 's/\$\?[A-Z]\{1,2\}\$\?[0-9]\{1,5\}/REF/g; s/,/\n/g' | tr -s '\n' | sort | uniq -cd
+# Improve: split by cell, not on all commas (e.g. separating arguments)
+# instead of phrases that occur at most 20 times, include also ones used thousands of times (repeated formulas) but only appearing in a few files
+# first list all the cells from the original and ignore them; then get a list of unique cells from each file
+
+for w in $(cat *.csv | sed 's/[^A-Za-z ]/ /g' | tr -s '[[:space:]]' '\n' | sort | uniq -cd | awk '1<$1 && $1<20{print $2}')
 do fct=$(grep -l -w $w *.csv | wc -l)
    if [[ $fct -gt 1 ]]; then
       echo $w in $fct
