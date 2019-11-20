@@ -9,7 +9,7 @@ sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='
 rate = 20 # seconds between requests
 minrest = 5 # wait at least this long (if a request took a long time)
 
-assids = {506693, 548127}  # Module 8 exam, Module 8 Exam (*V*)
+assids = {506677, 548133}  # Module 9 exam, Module 9 Exam (*V*)
 
 curl = canvasbase + f'audit/grade_change/courses/{courseid}'
 

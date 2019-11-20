@@ -3,10 +3,10 @@
 from canvas import *
 import shutil
 
-assids = [506753, # mod 8 spreadsheet upload
-          565065] # mod 8 upload (*V*)
+assids = [506754, # mod 9 spreadsheet upload
+          565066] # mod 9 upload (*V*)
 
-savedir = 'mymod8'
+savedir = 'mymod9'
 
 rate = 15
 minrest = 5
