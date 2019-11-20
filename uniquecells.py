@@ -40,3 +40,29 @@ if __name__ == '__main__':
             else:
                 cellfiles[cell].append(xlfile)
 
+# follow up with something like
+# files2 = set(tuple(f) for f in cellfiles.values() if len(f) == 2)
+# rpts2 = {ff: 0 for ff in files2}
+# for fs in cellfiles.values():
+#    if len(fs) == 2:
+#        langs[tuple(fs)] += 1
+
+# then, looking at big = max(rpts2.values),
+# then big = max(v for v in rpts2.values() if v < big), etc.
+# suspsets = [ff for ff in rpts2 if rpts2[ff] == big]
+# for susp in suspsets:
+#    susp = list(susp)
+#    thecels = [c for c in cellfiles if cellfiles[c] == susp]
+# # Check it out; are they suspicious or what? Numbers usually turn out not to be
+
+# Also consider:
+
+#for ff,v in rpts2.items():
+#    if 2 < v < 6: # these guys share 2-6 cells
+#        print(ff, end=": ")
+#        for c,fs in cellfiles.items():
+#            if tuple(fs) == ff:
+#                print(c, end=', ')
+#        print()
+        
+                
