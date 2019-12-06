@@ -9,13 +9,13 @@ sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='
 rate = 20 # seconds between requests
 minrest = 5 # wait at least this long (if a request took a long time)
 
-assids = {506677, 548133}  # Module 9 exam, Module 9 Exam (*V*)
+assids = {506731, 548134}  # Module 10 exam, Module 10 Exam (*V*)
 
 curl = canvasbase + f'audit/grade_change/courses/{courseid}'
 
 section = sections[secid]
 #section1 = sections[secid1]
-dategot = '2019-02-25T00:00:00Z'
+dategot = '2019-11-25T00:00:00Z'
 mystuds = section['students'] # + section1['students']
 reports = set()
 stuname = {stu['id']: stu['name'] for stu in students}

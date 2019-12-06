@@ -3,8 +3,8 @@
 from canvas import *
 import sys
 
-quizid = 73809 #mod 9 exam
-altquiz = 79219 # Module 9 Exam (*V*)
+quizid = 73863 #mod 10 exam
+altquiz = 79220 # Module 10 Exam (*V*)
 
 studict = {stu['id'] : stu['name'] for stu in students}
 
