@@ -45,7 +45,7 @@ if __name__ == '__main__':
 # rpts2 = {ff: 0 for ff in files2}
 # for fs in cellfiles.values():
 #    if len(fs) == 2:
-#        langs[tuple(fs)] += 1
+#        rpts2[tuple(fs)] += 1
 
 # then, looking at big = max(rpts2.values),
 # then big = max(v for v in rpts2.values() if v < big), etc.
