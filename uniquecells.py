@@ -41,11 +41,14 @@ if __name__ == '__main__':
                 cellfiles[cell].append(xlfile)
 
 # follow up with something like
-# files2 = set(tuple(f) for f in cellfiles.values() if len(f) == 2)
-# rpts2 = {ff: 0 for ff in files2}
-# for fs in cellfiles.values():
-#    if len(fs) == 2:
-#        langs[tuple(fs)] += 1
+    files = [0]*12
+    rpts = [0]*12
+    for n in range(2,12):
+        files[n] = set(tuple(f) for f in cellfiles.values() if len(f) == n) # all the n-tuples of files with cells appearing in only those n files
+        rpts[n] = {ff: 0 for ff in files[n]} # the number of cells unique to this n-tuple of files
+        for fs in cellfiles.values():
+            if len(fs) == n:
+                rpts[n][tuple(fs)] += 1
 
 # then, looking at big = max(rpts2.values),
 # then big = max(v for v in rpts2.values() if v < big), etc.
@@ -57,12 +60,10 @@ if __name__ == '__main__':
 
 # Also consider:
 
-#for ff,v in rpts2.items():
-#    if 2 < v < 6: # these guys share 2-6 cells
-#        print(ff, end=": ")
-#        for c,fs in cellfiles.items():
-#            if tuple(fs) == ff:
-#                print(c, end=', ')
-#        print()
-        
-                
+    for ff,v in rpts[2].items():
+        if 2 < v < 6: # these guys share 2-6 cells
+            print(ff, end=": ")
+            for c,fs in cellfiles.items():
+                if tuple(fs) == ff:
+                    print(c, end=', ')
+            print()
