@@ -83,7 +83,7 @@ while IFS=$'\t' read fn cdate cstamp creatr mdate mstamp moddr; do
             creatr="$RED$creatr$DEF"
 #        fi
     fi
-    if ((mstamp > now || mstamp < now-16*60*60*24)); then # 16 days earlier for module 7 - march 17
+    if ((mstamp > now || mstamp < now-13*60*60*24)); then # 16 days earlier for module 7 - march 17
         msg2=1
         mdate="$RED$mdate$DEF"
     fi
