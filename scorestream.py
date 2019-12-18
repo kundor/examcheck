@@ -25,18 +25,21 @@ with canvas_session() as s:
       try:
         start = time.time()
         signal.signal(signal.SIGINT, deferint)
-        with s.get(curl, params={'start_time': dategot}) as response:
+        try:
+          with s.get(curl, params={'start_time': dategot}) as response:
             response_date = response.headers['Date']
             gce = response.json()['events']
-        caught = [f"{stuname[g['links']['student']]}: {g['grade_after']}" for g in gce if g['links']['assignment'] in assids and g['links']['student'] in mystuds]
-        if caught:
+          caught = [f"{stuname[g['links']['student']]}: {g['grade_after']}" for g in gce if g['links']['assignment'] in assids and g['links']['student'] in mystuds]
+          if caught:
             print('\n'.join(c for c in caught))
             reports.update(caught)
 
-        response_date = time.strptime(response_date[:-4], '%a, %d %b %Y %H:%M:%S')
-        dategot = time.strftime('%Y-%m-%dT%H:%M:%SZ', response_date)
-        #time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(start))
-        #using local time doesn't work when it's not in sync with Canvas's server time
+          response_date = time.strptime(response_date[:-4], '%a, %d %b %Y %H:%M:%S')
+          dategot = time.strftime('%Y-%m-%dT%H:%M:%SZ', response_date)
+          #time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(start))
+          #using local time doesn't work when it's not in sync with Canvas's server time
+        except KeyError:
+          pass
         elapsed = time.time() - start
         signal.signal(signal.SIGINT, signal.default_int_handler)
         if deferint.nomore:
