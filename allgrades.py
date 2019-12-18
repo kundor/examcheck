@@ -3,8 +3,9 @@
 from canvas import *
 import sys
 
-quizid = 73835 # final exam
-altquiz = 86490 # Final Exam (*V*)
+quizids = [73835, # final exam
+           87548, # final exam NO WEBCAM,
+           86490] # Final Exam (*V*)
 
 studict = {stu['id'] : stu['name'] for stu in students}
 
@@ -32,8 +33,7 @@ def printgrades(session, curl):
             print(f"{stuname}\t{round(sub['score'])}")
 
 with canvas_session() as s:
-    curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
-    printgrades(s, curl)
-    curl = canvasbase + f'courses/{courseid}/quizzes/{altquiz}/submissions'
-    printgrades(s, curl)
+    for quizid in quizids:
+        curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
+        printgrades(s, curl)
 
