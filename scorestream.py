@@ -17,11 +17,11 @@ section = sections[secid]
 #section1 = sections[secid1]
 dategot = '2019-11-25T00:00:00Z'
 mystuds = section['students'] # + section1['students']
-reports = set()
+scores = {}
 stuname = {stu['id']: stu['name'] for stu in students}
 
 with canvas_session() as s:
-    while len(reports) < len(mystuds):
+    while len(scores) < len(mystuds):
       try:
         start = time.time()
         signal.signal(signal.SIGINT, deferint)
@@ -29,10 +29,17 @@ with canvas_session() as s:
           with s.get(curl, params={'start_time': dategot}) as response:
             response_date = response.headers['Date']
             gce = response.json()['events']
-          caught = [f"{stuname[g['links']['student']]}: {g['grade_after']}" for g in gce if g['links']['assignment'] in assids and g['links']['student'] in mystuds]
-          if caught:
-            print('\n'.join(c for c in caught))
-            reports.update(caught)
+          for g in gce:
+              sid = g['links']['students']
+              if g['links']['assignment'] in assids and sid in mystuds:
+                  thescore = g['grade_after']
+                  if sid in scores:
+                      if thescore != scores[sid]:
+                          print(f"{stuname[sid]}: {thescore} now?")
+                          scores[sid] = thescore
+                      continue
+                  scores[sid] = thescore
+                  print(f"{len(scores):2}. {stuname[sid]}: {thescore}")
 
           response_date = time.strptime(response_date[:-4], '%a, %d %b %Y %H:%M:%S')
           dategot = time.strftime('%Y-%m-%dT%H:%M:%SZ', response_date)
