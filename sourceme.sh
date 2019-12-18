@@ -1,3 +1,4 @@
+# sourced from newcheck.sh, and also allows interactive reportline
 
 RED=$(echo -e "\e[31m")
 DEF=$(echo -e "\e[39m")
