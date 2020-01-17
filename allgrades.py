@@ -3,9 +3,7 @@
 from canvas import *
 import sys
 
-quizids = [73835, # final exam
-           87548, # final exam NO WEBCAM,
-           86490] # Final Exam (*V*)
+quizids = [85622] # Mod 1 exam
 
 studict = {stu['id'] : stu['name'] for stu in students}
 

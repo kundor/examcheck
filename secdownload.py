@@ -3,10 +3,9 @@
 from canvas import *
 import shutil
 
-assids = [506744, # final spreadsheet upload
-          596106] # final upload (*V*)
+assids = [613748] # Mod 1 upload
 
-savedir = 'myfinal'
+savedir = 'mymod1'
 
 rate = 15
 minrest = 5
@@ -20,7 +19,7 @@ section = sections[secid]
 mystuds = section['students'] # + section1['students']
 studict = {stu['id'] : stu for stu in students}
 dnlds = {}
-weirdids = {347828} # Test Student
+weirdids = {353646} # Test Student
 
 os.makedirs(savedir, exist_ok=True)
 os.chdir(savedir)
