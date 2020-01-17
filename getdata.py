@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -i
 
 import re
 from colorama import Fore
@@ -19,8 +19,8 @@ with canvas_session() as s:
 
     # Boo is in every section
     osecs = []
-    for t in teachers:                          
-        if t['name'] == 'Elizabeth Grulke':                                                           
+    for t in teachers:
+        if t['name'] == 'Elizabeth Grulke':
             continue
         osecs += t['sections']
     for t in teachers:
@@ -43,8 +43,8 @@ with canvas_session() as s:
     keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
     studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
                        **{k: stu[k] for k in keys}) for stu in stuen] 
-    with open('students.json', 'wt') as fid:                     
-        json.dump(studentinf, fid, indent=2)        
+    with open('students.json', 'wt') as fid:
+        json.dump(studentinf, fid, indent=2)
 
     studict = {stu['id'] : stu for stu in studentinf}
 
@@ -113,9 +113,10 @@ with open('instructor-sections', 'wt') as fid:
     for tch in teachers:
         fid.write(tch['name'] + '\t' + '\t'.join(sorted(sec[1] for sec in tch['sections'])) + '\n')
    
-if input('Create all-modder with full names?') == 'y':
+if input('Create all-modder with full names?').casefold() in {'y', 'yes'}:
     with open('all-modder', 'wt') as fid:
         for stu in studentinf:
             fid.write(codename(stu) + '\t' + stu['name'] + '\n')
 else:
     print('Not making all-modder')
+
