@@ -12,8 +12,8 @@ if cuser:
 else:
     warnings.warn('Cannot find environment variable CANVASUSER', RuntimeWarning)
 
-courseid = 51659
-secid = 26159 # 643R
+courseid = 57435
+secid = 37411 # 012
 canvasbase = 'https://canvas.colorado.edu/api/v1/'
 
 def canvas_session():
