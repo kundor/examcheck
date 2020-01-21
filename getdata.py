@@ -27,6 +27,27 @@ with canvas_session() as s:
         if t['name'] == 'Elizabeth Grulke':
             t['sections'] = [sec for sec in t['sections'] if sec not in osecs]
 
+    sectch = {sec[1]: tch['name'] for tch in teachers for sec in tch['sections']}
+    for sec in sorted(sectch):
+       print(f"{sec}: {sectch[sec]}")
+
+    while True:
+        secnum = input("Change section? ")
+        if not secnum:
+            break
+        if secnum not in sectch:
+            print("Not a section. (Enter nothing to continue)")
+            continue
+        newname = input('Correct teacher? ')
+        if newname not in sectch.values():
+            print('Not a teacher?!?')
+            continue
+        oldteacher = next(t for t in teachers if t['name'] == sectch[secnum])
+        newteacher = next(t for t in teachers if t['name'] == newname)
+        thesection = next(sec for sec in oldteacher['sections'] if sec[1] == secnum)
+        oldteacher['sections'].remove(thesection)
+        newteacher['sections'].append(thesection)
+
     teacherdat = json.dumps(teachers, indent=2).replace('{\n    "id"', '{ "id"')
     teacherdat = re.sub(r'\[\s*([0-9]*),\s*("[\w-]*")\s*\]', r'[ \1, \2 ]', teacherdat)
     with open('teachers.json', 'wt') as fid:
