@@ -9,7 +9,12 @@ sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='
 rate = 20 # seconds between requests
 minrest = 5 # wait at least this long (if a request took a long time)
 
-assids = {589949}  # Mod 1 Exam
+try:
+    assids = {int(arg) for arg in sys.argv[1:]}
+except ValueError:
+    sys.exit('Arguments must be assignment IDs (integers)')
+if not assids:
+    sys.exit('Must specify at least one assignment ID')
 
 curl = canvasbase + f'audit/grade_change/courses/{courseid}'
 
