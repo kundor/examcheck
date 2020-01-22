@@ -11,6 +11,7 @@ if not quizids:
     sys.exit('Must specify at least one quiz ID')
 
 studict = {stu['id'] : stu['name'] for stu in students}
+scores = {}
 
 def printgrades(session, curl):
     while curl:
@@ -21,19 +22,29 @@ def printgrades(session, curl):
             if 'user_id' not in sub:
                 print('What kinda submission is this, with no user_id?', sub, file=sys.stderr)
                 continue
-            if sub['user_id'] not in studict:
-                print(f'I never heard of this user {sub["user_id"]}', file=sys.stderr)
+            sid = sub['user_id']
+            if sid not in studict:
+                print(f'I never heard of this user {sid}', file=sys.stderr)
                 continue
-            stuname = studict[sub['user_id']]
+            stuname = studict[sid]
             if 'score' not in sub:
                 print(f'No score for {stuname}?', file=sys.stderr)
                 continue
-            if not isinstance(sub['score'], float):
-                print(f'Some crazy score {sub["score"]} for {stuname}', file=sys.stderr)
+            thescore = sub['score']
+            if not isinstance(thescore, float):
+                print(f'Some crazy score {thescore} for {stuname}', file=sys.stderr)
                 continue
-            if not sub['score'].is_integer():
-                print(f'Not integer score {sub["score"]} for {sub["user_id"]}', file=sys.stderr)
-            print(f"{stuname}\t{round(sub['score'])}")
+            if not thescore.is_integer():
+                print(f'Not integer score {thescore} for {sid}', file=sys.stderr)
+            if sid in scores:
+                if scores[sid] == thescore:
+                    print(f'Same score {thescore} seen again for {stuname}', file=sys.stderr)
+                    continue
+                print(f'Different score {thescore} seen for {stuname}, previously {scores[sid]}', file=sys.stderr)
+                if thescore < scores[sid]:
+                    continue # keep max score in dictionary and output
+            print(f"{stuname}\t{round(thescore)}")
+            scores[sid] = thescore
 
 with canvas_session() as s:
     for quizid in quizids:
