@@ -3,7 +3,12 @@
 from canvas import *
 import sys
 
-quizids = [85622] # Mod 1 exam
+try:
+    quizids = {int(arg) for arg in sys.argv[1:]}
+except ValueError:
+    sys.exit('Arguments must be quiz IDs (integers)')
+if not quizids:
+    sys.exit('Must specify at least one quiz ID')
 
 studict = {stu['id'] : stu['name'] for stu in students}
 
