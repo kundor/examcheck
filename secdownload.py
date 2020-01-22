@@ -2,10 +2,20 @@
 
 from canvas import *
 import shutil
+import sys
 
-assids = [613748] # Mod 1 upload
+if len(sys.argv) > 1 and not sys.argv[-1].isdecimal():
+    savedir = sys.argv.pop()
+    print('Saving to', savedir)
+else:
+    savedir = input('Directory to save in? ')
 
-savedir = 'mymod1'
+try:
+    assids = {int(arg) for arg in sys.argv[1:]}
+except ValueError:
+    sys.exit('Arguments must be upload assignment IDs (integers)')
+if not assids:
+    sys.exit('Must specify at least one upload assignment ID')
 
 rate = 15
 minrest = 5
