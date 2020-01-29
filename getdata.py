@@ -4,6 +4,47 @@ import re
 from colorama import Fore
 from canvas import *
 
+def backupname(filename):
+    """Change filename.ext to filename1.ext, incrementing until it doesn't exist"""
+    base, ext = os.path.splitext(filename)
+    num = 1
+    while os.path.exists(f'{base}{num}{ext}'):
+        num += 1
+    return f'{base}{num}{ext}'
+
+def diffwrite(filename, data, as_string=None):
+    if not as_string:
+        as_string = json.dumps(data, indent=2)
+    try:
+        with open(filename, 'xt') as fid: # write, failing if it exists
+            fid.write(as_string)
+        return
+    except FileExistsError:
+        pass
+    with open(filename) as fil:
+        old_data = json.load(fil)
+    comparelists(old_data, data)
+    while True:
+        answer = input('Clobber old file? [B]ackup/[c]lobber/do [n]othing: ').lower()
+        if answer in {'c', 'clobber'}:
+            print('Clobbering old file')
+            with open(filename, 'wt') as fid:
+                fid.write(as_string)
+            return
+        elif answer in {'n', 'nothing'}:
+            print('Discarding new data')
+            return
+        elif answer in {'', 'b', 'backup'}:
+            bkup = backupname(filename)
+            print(f'Moving {filename} to {bkup}')
+            os.rename(filename, bkup)
+            with open(filename, 'xt') as fid:
+                fid.write(as_string)
+            return
+        else:
+            print(f"I don't understand '{answer}'!")
+
+
 with canvas_session() as s:
     curl = canvasbase + f'courses/{courseid}/users'
     s.params = {'per_page': 100, 'include[]': 'enrollments', 'enrollment_type[]': 'teacher'}
@@ -50,8 +91,7 @@ with canvas_session() as s:
 
     teacherdat = json.dumps(teachers, indent=2).replace('{\n    "id"', '{ "id"')
     teacherdat = re.sub(r'\[\s*([0-9]*),\s*("[\w-]*")\s*\]', r'[ \1, \2 ]', teacherdat)
-    with open('teachers.json', 'wt') as fid:
-        fid.write(teacherdat)
+    diffwrite('teachers.json', teachers, teacherdat)
     # Fix: sometimes extra teachers are present
 
 
@@ -64,8 +104,7 @@ with canvas_session() as s:
     keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
     studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
                        **{k: stu[k] for k in keys}) for stu in stuen] 
-    with open('students.json', 'wt') as fid:
-        json.dump(studentinf, fid, indent=2)
+    diffwrite('students.json', studentinf)
 
     studict = {stu['id'] : stu for stu in studentinf}
 
@@ -110,9 +149,7 @@ with canvas_session() as s:
     sectiondat = re.sub('\n  "id"', '"id"', sectiondat)
     sectiondat = re.sub('\[\n {', '[{', sectiondat)
     sectiondat = re.sub('"\n }', '"}', sectiondat)
-    with open('sections.json', 'wt') as fid:
-        fid.write(sectiondat)
-
+    diffwrite('sections.json', sections, sectiondat)
 
     curl = canvasbase + f'courses/{courseid}/assignments'
 
