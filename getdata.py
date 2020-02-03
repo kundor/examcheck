@@ -12,7 +12,21 @@ def backupname(filename):
         num += 1
     return f'{base}{num}{ext}'
 
-def diffwrite(filename, data, as_string=None):
+class TabLoader:
+    def __init__(self, keys, varlength=False):
+        self.keys = keys
+        self.varlength = varlength
+    def __call__(self, fid):
+        data = []
+        for line in fid:
+            fields = line.rstrip().split('\t')
+            if self.varlength:
+                fields = fields[:len(keys)-1] + [fields[len(keys)-1:]]
+            data.append(dict(zip(self.keys, fields)))
+        return data
+
+
+def diffwrite(filename, data, as_string=None, loader=json.load):
     if not as_string:
         as_string = json.dumps(data, indent=2)
     try:
@@ -22,7 +36,7 @@ def diffwrite(filename, data, as_string=None):
     except FileExistsError:
         pass
     with open(filename) as fil:
-        old_data = json.load(fil)
+        old_data = loader(fil)
     comparelists(old_data, data)
     while True:
         answer = input('Clobber old file? [B]ackup/[c]lobber/do [n]othing: ').lower()
@@ -163,9 +177,9 @@ with canvas_session() as s:
         rj = response.json()
     exams = [{k : ass[k] for k in ('due_at', 'id', 'name', 'quiz_id')} for ass in rj if 'quiz_id' in ass]
 
-with open('allnames', 'wt') as fid:
-    for stu in studentinf:
-        fid.write(codename(stu) + '\t' + stu['name'] + '\t' + stu['section'] + '\n')
+allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
+allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')))
+diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
 
 with open('instructor-sections', 'wt') as fid:
     for tch in teachers:
