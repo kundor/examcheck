@@ -39,23 +39,22 @@ def diffwrite(filename, data, as_string=None, loader=json.load):
         comparelists(old_data, data)
         while True:
             answer = input('Clobber old file? [B]ackup/[c]lobber/do [n]othing: ').lower()
-            if answer in {'c', 'clobber'}:
-                print('Clobbering old file')
-                with open(filename, 'wt') as fid:
-                    fid.write(as_string)
-                return
-            elif answer in {'n', 'nothing'}:
-                print('Discarding new data')
-                return
-            elif answer in {'', 'b', 'backup'}:
+            if 'backup'.startswith(answer): # includes blank answer
                 bkup = backupname(filename)
                 print(f'Moving {filename} to {bkup}')
                 os.rename(filename, bkup)
                 with open(filename, 'xt') as fid:
                     fid.write(as_string)
                 return
-            else:
-                print(f"I don't understand '{answer}'!")
+            if 'clobber'.startswith(answer):
+                print('Clobbering old file')
+                with open(filename, 'wt') as fid:
+                    fid.write(as_string)
+                return
+            if 'nothing'.startswith(answer):
+                print('Discarding new data')
+                return
+            print(f"I don't understand '{answer}'!")
 
 
 with canvas_session() as s:
