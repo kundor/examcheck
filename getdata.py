@@ -15,7 +15,7 @@ def backupname(filename):
     return f'{base}{num}{ext}'
 
 class TabLoader:
-    def __init__(self, keys, varlength=False):
+    def __init__(self, *keys, varlength=False):
         self.keys = keys
         self.varlength = varlength
     def __call__(self, fid):
@@ -23,7 +23,7 @@ class TabLoader:
         for line in fid:
             fields = line.rstrip().split('\t')
             if self.varlength:
-                fields = fields[:len(keys)-1] + [fields[len(keys)-1:]]
+                fields = fields[:len(self.keys)-1] + [fields[len(self.keys)-1:]]
             data.append(dict(zip(self.keys, fields)))
         return data
 
@@ -37,6 +37,9 @@ def wrapchanged(label, old, new, keys, width, maxkeylen):
     blocks = [f'{label:<{maxkeylen+2}}']
     for key in keys:
         if old[key] != new[key]:
+            if isinstance(old[key], list):
+                if sorted(old[key]) == sorted(new[key]):
+                    continue
             blocks.append(f'{key}: {old[key]} -> {new[key]}')
     wrapblocks(blocks, width)
 
@@ -60,6 +63,7 @@ def wrapblocks(blocks, width, indent="    "):
             print(*('\n' + line for line in wrapt), end='')
             curwidth = len(wrapt[-1])
         sep = ', '
+    print()
 
 
 def comparelists(oldlist, newlist, primary_key=None):
@@ -242,7 +246,7 @@ with canvas_session() as s:
     exams = [{k : ass[k] for k in ('due_at', 'id', 'name', 'quiz_id')} for ass in rj if 'quiz_id' in ass]
 
 allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
-allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')))
+allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames)
 diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
 
 instsec = [{'name': tch['name'], 'sections': sorted(sec[1] for sec in tch['sections'])} for tch in teachers]
