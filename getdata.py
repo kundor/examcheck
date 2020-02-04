@@ -254,5 +254,5 @@ if input('Create all-modder with full names?').casefold() in {'y', 'yes'}:
         for stu in studentinf:
             fid.write(codename(stu) + '\t' + stu['name'] + '\n')
 else:
-    print('Not making all-modder')
+    print('Not making all-modder. (`cut -f -2 allnames > all-modder` has same effect)')
 
