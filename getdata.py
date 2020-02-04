@@ -78,7 +78,7 @@ def comparelists(oldlist, newlist, primary_key=None):
     width, _ = shutil.get_terminal_size()
     old = {o[primary_key]: o for o in oldlist}
     new = {n[primary_key]: n for n in newlist}
-    #maxkeylen = max(len(str(k)) for k in oldkeys | new.keys())
+    maxkeylen = max(len(str(k)) for k in old.keys() | new.keys())
     if old.keys() - new.keys():
         print(Fore.RED + 'Only in old:' + Fore.RESET)
         for key in old.keys() - new.keys():
