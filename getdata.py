@@ -247,9 +247,9 @@ diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name',
 
 instsec = [{'name': tch['name'], 'sections': sorted(sec[1] for sec in tch['sections'])} for tch in teachers]
 instsecstr = '\n'.join(tch['name'] + '\t' + '\t'.join(tch['sections']) for tch in instsec)
-diffwrite('instructor-sections', instsec, instsecstr, loader=TabLoader('name', 'sections', varlength=True)
+diffwrite('instructor-sections', instsec, instsecstr, loader=TabLoader('name', 'sections', varlength=True))
 
-if input('Create all-modder with full names?').casefold() in {'y', 'yes'}:
+if input('Create all-modder with full names? ').casefold() in {'y', 'yes'}:
     with open('all-modder', 'wt') as fid:
         for stu in studentinf:
             fid.write(codename(stu) + '\t' + stu['name'] + '\n')
