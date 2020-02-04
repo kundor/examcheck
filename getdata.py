@@ -3,6 +3,8 @@
 import re
 from colorama import Fore
 from canvas import *
+from textwrap import TextWrapper
+import shutil
 
 def backupname(filename):
     """Change filename.ext to filename1.ext, incrementing until it doesn't exist"""
@@ -25,6 +27,70 @@ class TabLoader:
             data.append(dict(zip(self.keys, fields)))
         return data
 
+def wrapdict(label, rec, keys, width, maxkeylen):
+    """Print key: value blocks, wrapping preferentially between keys"""
+    blocks = [label + ' '*(maxkeylen - len(label))]
+    blocks += [f'{key}: {rec[key]}' for key in keys]
+    wrapblocks(blocks, width)
+
+def wrapchanged(label, old, new, keys, width, maxkeylen):
+    blocks = [label + ' '*(maxkeylen - len(label))]
+    for key in keys:
+        if old[key] != new[key]:
+            blocks.append(f'{key}: {old[key]} -> {new[key]}')
+    wrapblocks(blocks, width)
+
+def wrapblocks(blocks, width, indent="    "):
+    # todo: figure out value lengths (from all records) so that all the entries are lined up the same way
+    TW = TextWrapper(width=width, initial_indent=indent, subsequent_indent=indent + "  ")
+    curwidth = 0
+    sep = '  '
+    for b in blocks:
+        if not curwidth:
+            print(b, end='')
+            curwidth = len(b)
+        elif curwidth + len(b) + 2 <= width:
+            print(sep + b, end='')
+            curwidth += len(b) + len(sep)
+        elif len(b) <= width - len(indent):
+            print('\n' + indent + b, end='')
+            curwidth = len(indent) + len(b)
+        else:
+            wrapt = TW.wrap(b)
+            print(*('\n' + line for line in wrapt), end='')
+            curwidth = len(wrapt[-1])
+        sep = ', '
+
+
+def comparelists(oldlist, newlist, primary_key=None):
+    """Print a diff of lists of dicts (assumed to have the same keys).
+    Values are assumed to be strings, numbers, or lists."""
+    thekeys = oldlist[0].keys() # Might want to check if all entries have same keys,
+    # and use the union or the most common set of keys
+    if len({frozenset(o.keys()) for o in oldlist} | {frozenset(n.keys()) for n in newlist}) != 1:
+        print('Warning: not all records have the same keys!')
+    if primary_key is None:
+        good_keys = ['id', 'codename', 'name']
+        try:
+            primary_key = next(gk for gk in good_keys if gk in thekeys)
+        except StopIteration:
+            primary_key = next(k for k in thekeys) # dict_keys aren't iterators, durr
+    width, _ = shutil.get_terminal_size()
+    old = {o[primary_key]: o for o in oldlist}
+    new = {n[primary_key]: n for n in newlist}
+    #maxkeylen = max(len(str(k)) for k in oldkeys | new.keys())
+    if old.keys() - new.keys():
+        print(Fore.RED + 'Only in old:' + Fore.RESET)
+        for key in old.keys() - new.keys():
+            wrapdict(key, old[key], thekeys - {primary_key}, width, maxkeylen)
+    if new.keys() - old.keys():
+        print(Fore.GREEN + 'Only in new:' + Fore.RESET)
+        for key in new.keys() - old.keys():
+            wrapdict(key, new[key], thekeys - {primary_key}, width, maxkeylen)
+    print(Fore.YELLOW + 'Changes:' + Fore.RESET)
+    for key in old.keys() & new.keys():
+        if old[key] != new[key]:
+            wrapchanged(key, old[key], new[key], thekeys - {primary_key}, width, maxkeylen)
 
 def diffwrite(filename, data, as_string=None, loader=json.load):
     if not as_string:
