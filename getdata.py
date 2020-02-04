@@ -29,12 +29,12 @@ class TabLoader:
 
 def wrapdict(label, rec, keys, width, maxkeylen):
     """Print key: value blocks, wrapping preferentially between keys"""
-    blocks = [label + ' '*(maxkeylen - len(label))]
+    blocks = [f'{label:<{maxkeylen+2}}']
     blocks += [f'{key}: {rec[key]}' for key in keys]
     wrapblocks(blocks, width)
 
 def wrapchanged(label, old, new, keys, width, maxkeylen):
-    blocks = [label + ' '*(maxkeylen - len(label))]
+    blocks = [f'{label:<{maxkeylen+2}}']
     for key in keys:
         if old[key] != new[key]:
             blocks.append(f'{key}: {old[key]} -> {new[key]}')
