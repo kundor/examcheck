@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -i
+#!/usr/bin/python3
 
 import re
 from colorama import Fore
@@ -7,6 +7,7 @@ from canvas import *
 from textwrap import TextWrapper
 from shutil import get_terminal_size
 from operator import itemgetter
+from traitlets.config import get_config
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
@@ -265,3 +266,6 @@ if input('Create all-modder with full names? ').casefold() in {'y', 'yes'}:
 else:
     print('Not making all-modder. (`cut -f -2 allnames > all-modder` has same effect)')
 
+c = get_config()
+c.InteractiveShellEmbed.colors = "Linux"
+IPython.embed(config=c)
