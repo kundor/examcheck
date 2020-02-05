@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 from canvas import *
-import sys
 
 try:
     quizids = {int(arg) for arg in sys.argv[1:]}

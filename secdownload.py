@@ -2,7 +2,6 @@
 
 from canvas import *
 import shutil
-import sys
 
 if len(sys.argv) > 1 and not sys.argv[-1].isdecimal():
     savedir = sys.argv.pop()
