@@ -28,7 +28,7 @@ section = sections[secid]
 mystuds = section['students'] # + section1['students']
 studict = {stu['id'] : stu for stu in students}
 dnlds = {}
-weirdids = {353646} # Test Student
+weirdids = {357062} # Test Student
 
 os.makedirs(savedir, exist_ok=True)
 os.chdir(savedir)
