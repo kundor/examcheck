@@ -4,7 +4,8 @@ import re
 from colorama import Fore
 from canvas import *
 from textwrap import TextWrapper
-import shutil
+from shutil import get_terminal_size
+from operator import itemgetter
 
 def backupname(filename):
     """Change filename.ext to filename1.ext, incrementing until it doesn't exist"""
@@ -79,7 +80,7 @@ def comparelists(oldlist, newlist, primary_key=None):
             primary_key = next(gk for gk in good_keys if gk in thekeys)
         except StopIteration:
             primary_key = next(k for k in thekeys) # dict_keys aren't iterators, durr
-    width, _ = shutil.get_terminal_size()
+    width, _ = get_terminal_size()
     old = {o[primary_key]: o for o in oldlist}
     new = {n[primary_key]: n for n in newlist}
     maxkeylen = max(len(str(k)) for k in old.keys() | new.keys())
@@ -136,7 +137,8 @@ with canvas_session() as s:
     teachers = []
     for tch in rj:
         try:
-            teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': [[ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']]}]
+            thesections = sorted(([ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(1))
+            teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': thesections}]
         except KeyError:
             print('Problem with record:', tch)
 
@@ -148,7 +150,7 @@ with canvas_session() as s:
         osecs += t['sections']
     for t in teachers:
         if t['name'] == 'Elizabeth Grulke':
-            t['sections'] = [sec for sec in t['sections'] if sec not in osecs]
+            t['sections'] = sorted((sec for sec in t['sections'] if sec not in osecs), key=itemgetter(1))
 
     sectch = {sec[1]: tch['name'] for tch in teachers for sec in tch['sections']}
     for sec in sorted(sectch):
@@ -212,8 +214,8 @@ with canvas_session() as s:
         rj = response.json()
     keys = ['id', 'name', 'sis_section_id']
     sections = [dict(allstudents=[st['id'] for st in rec['students']],
-                     students=[stu['id'] for stu in studentinf if stu['section'] == rec['name'][10:]],
-                     teacher=next(t['name'] for t in teachers if rec['id'] in [ts[0] for ts in t['sections']]),
+                     students=sorted(stu['id'] for stu in studentinf if stu['section'] == rec['name'][10:]),
+                     teacher=sectch[rec['name'][10:]],
                      **{k : rec[k] for k in keys}) for rec in rj if rec['students']]
     for sec in sections:
         allstus = set(sec['allstudents'])
