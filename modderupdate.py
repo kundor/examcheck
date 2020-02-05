@@ -186,7 +186,7 @@ with open(ifile, 'rt') as inf:
             print(f'Approving email {modder} for user {stu["name"]}')
             modders[name].append(modder)
         else:
-            addit = input(f'User {stu["name"]}: modder {modder}. Add?')
+            addit = input(f'User {stu["name"]}: modder {modder}. Add? ')
             if addit.lower() in {'y', 'yes'}:
                 modders[name].append(modder)
 
