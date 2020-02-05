@@ -2,10 +2,13 @@
 
 import re
 from colorama import Fore
+import IPython
 from canvas import *
 from textwrap import TextWrapper
 from shutil import get_terminal_size
 from operator import itemgetter
+
+sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
 def backupname(filename):
     """Change filename.ext to filename1.ext, incrementing until it doesn't exist"""
