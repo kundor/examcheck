@@ -118,7 +118,7 @@ done < info
 
 for f in *xlsx; do
     if zipinfo "$f" xl/externalLinks/externalLink1.xml >/dev/null 2>&1; then
-        reportline "$f" Links to '"'$(../wherelink.py "$f")'"'
+        reportline "$f" Links to $(../wherelink.py "$f")
     fi
 done
 
