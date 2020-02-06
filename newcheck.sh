@@ -9,6 +9,8 @@ if ! [[ -e ../allnames && -e ../instructor-sections && -e ../all-modder ]]; then
     exit 2
 fi
 
+shopt -s nullglob
+
 source ../sourceme.sh || exit
 
 istempfile() {
