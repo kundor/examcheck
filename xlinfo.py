@@ -20,7 +20,12 @@ from zipfile import ZipFile, BadZipFile
 #         'dcterms': "http://purl.org/dc/terms/"}
 
 # xlfiles = sorted(glob.glob('*.xlsx'))
-subfile = os.path.expanduser('~/Downloads/submissions.zip')
+
+if len(sys.argv) > 1:
+    subfiles = sys.argv[1:]
+else:
+    subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
+    print(f'Using file {subfiles[0]}', file=sys.stderr)
 
 def alltags(xmlroot):
     tags = {}
@@ -46,37 +51,39 @@ def timeforms(tags, key):
         return round(thetime.timestamp()), thetime.strftime('%m/%d/%Y %I:%M:%S %p')
     return thetime, thetime
 
-with ZipFile(subfile, 'r') as subs, open('info1', 'wt') as out:
-    for f in sorted(subs.namelist()):
-        if not f.endswith('.xlsx'):
-            print('Not a xlsx file: ' + f, file=sys.stderr)
-            continue
-        fdata = io.BytesIO(subs.read(f))
-        try:
-            xlsx = ZipFile(fdata, 'r')
-        except BadZipFile as e:
-            print(f, 'is not a zip file?', e, file=sys.stderr)
-            continue
-        try:
-            prop = xlsx.open('docProps/core.xml', 'r')
-        except KeyError:
-            print('Metadata not found (file docProps/core.xml missing) in file ' + f, file=sys.stderr)
-            continue
-        tree = ET.parse(prop)
-        tags = alltags(tree.getroot()) 
-        mstamp, mtime = timeforms(tags, 'modified')
-        cstamp, ctime = timeforms(tags, 'created')
-        print(f,
-              ctime,
-              cstamp,
-              tagval(tags, 'creator'),
-              mtime,
-              mstamp,
-              tagval(tags, 'lastModifiedBy'),
-              sep='\t', file=out)
-        prop.close()
-        xlsx.close()
-        fdata.close()
+with open('info', 'xt') as out:
+    for subfile in subfiles:
+        with ZipFile(subfile, 'r') as subs:
+            for f in sorted(subs.namelist()):
+                if not f.endswith('.xlsx'):
+                    print('Not a xlsx file: ' + f, file=sys.stderr)
+                    continue
+                fdata = io.BytesIO(subs.read(f))
+                try:
+                    xlsx = ZipFile(fdata, 'r')
+                except BadZipFile as e:
+                    print(f, 'is not a zip file?', e, file=sys.stderr)
+                    continue
+                try:
+                    prop = xlsx.open('docProps/core.xml', 'r')
+                except KeyError:
+                    print('Metadata not found (file docProps/core.xml missing) in file ' + f, file=sys.stderr)
+                    continue
+                tree = ET.parse(prop)
+                tags = alltags(tree.getroot()) 
+                mstamp, mtime = timeforms(tags, 'modified')
+                cstamp, ctime = timeforms(tags, 'created')
+                print(f,
+                      ctime,
+                      cstamp,
+                      tagval(tags, 'creator'),
+                      mtime,
+                      mstamp,
+                      tagval(tags, 'lastModifiedBy'),
+                      sep='\t', file=out)
+                prop.close()
+                xlsx.close()
+                fdata.close()
         
         
 # slow way to get info from openpyxl
