@@ -58,7 +58,11 @@ EFMT=$'$FileName\t${CreateDate#;DateFmt("%x %X")}\t${CreateDate#;DateFmt("%s")}\
 XFMT=$'$FileName\t${CreateDate#;DateFmt("%x %X")}\t${CreateDate#;DateFmt("%s")}\t$Author\t${ModifyDate#;DateFmt("%x %X")}\t${ModifyDate#;DateFmt("%s")}\t$LastModifiedBy'
 
 exiftool -f -p "$EFMT" *xlsx > info
-TZ=UTC exiftool -f -p "$XFMT" *.xls >> info
+
+xlfiles=(*.xls)
+if [[ ${#xlfiles[@]} -gt 0 ]]; then
+    TZ=UTC exiftool -f -p "$XFMT" *.xls >> info
+fi
 
 IFS=$'\t' read CSTAMP CREATR OMSTAMP OMODDR <<<$(exiftool -d '%s' -p $'$CreateDate\t$Creator\t$ModifyDate\t$LastModifiedBy' "$1")
 
