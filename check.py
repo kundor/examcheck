@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -i
 
 import io
 import os
@@ -7,19 +7,7 @@ import sys
 import datetime
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile, BadZipFile
-
-# timing samples (S19 Mod3; Mod2):
-#  exiftool:                        12.180 s;  9.288 s
-#  openpyxl method:                 19.176 s; 11.632 s
-#  zipfile/xml method:               0.610 s;  0.397 s
-#  directly out of submissions.zip:            1.925 s  (saves 2.440 s unzipping)
-#    
-
-# xlns = {'cp': "http://schemas.openxmlformats.org/package/2006/metadata/core-properties",
-#         'dc': "http://purl.org/dc/elements/1.1/",
-#         'dcterms': "http://purl.org/dc/terms/"}
-
-# xlfiles = sorted(glob.glob('*.xlsx'))
+from openpyxl import load_workbook
 
 if len(sys.argv) > 1:
     subfiles = sys.argv[1:]
@@ -54,26 +42,26 @@ def timeforms(tags, key):
 with open('info', 'xt') as out:
     for subfile in subfiles:
         with ZipFile(subfile, 'r') as subs:
-            for f in sorted(subs.namelist()):
-                if not f.endswith('.xlsx'):
-                    print('Not a xlsx file: ' + f, file=sys.stderr)
+            for filename in sorted(subs.namelist()):
+                if not filename.endswith('.xlsx'):
+                    print('Not a xlsx file: ' + filename, file=sys.stderr)
                     continue
-                fdata = io.BytesIO(subs.read(f))
+                fdata = io.BytesIO(subs.read(filename))
                 try:
                     xlsx = ZipFile(fdata, 'r')
                 except BadZipFile as e:
-                    print(f, 'is not a zip file?', e, file=sys.stderr)
+                    print(filename, 'is not a zip file?', e, file=sys.stderr)
                     continue
                 try:
                     prop = xlsx.open('docProps/core.xml', 'r')
                 except KeyError:
-                    print('Metadata not found (file docProps/core.xml missing) in file ' + f, file=sys.stderr)
+                    print('Metadata not found (file docProps/core.xml missing) in file ' + filename, file=sys.stderr)
                     continue
                 tree = ET.parse(prop)
                 tags = alltags(tree.getroot()) 
                 mstamp, mtime = timeforms(tags, 'modified')
                 cstamp, ctime = timeforms(tags, 'created')
-                print(f,
+                print(filename,
                       ctime,
                       cstamp,
                       tagval(tags, 'creator'),
@@ -83,13 +71,22 @@ with open('info', 'xt') as out:
                       sep='\t', file=out)
                 prop.close()
                 xlsx.close()
+
+                codename = filename[:filename.find('_')]
+                wb = load_workbook(fdata, read_only=True)
+                with open(codename + '.csv', 'wt') as csv:
+                    for ws in wb.worksheets:
+                        ws.reset_dimensions()
+                        for row in ws.rows:
+                            print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','), file=csv)
+                        print('----------', file=csv)
+                wb.close()
                 fdata.close()
-        
-        
-# slow way to get info from openpyxl
+
+
 # might be worth it if we're already opening them (to convert to csv)
-#        wb = openpyxl.load_workbook(f, read_only=True)
-#        print(f, 
+#        wb = openpyxl.load_workbook(filename, read_only=True)
+#        print(filename, 
 #              wb.properties.created.strftime('%m/%d/%Y %I:%M:%S %p'),
 #              round(wb.properties.created.replace(tzinfo=datetime.timezone.utc).timestamp()),
 #              wb.properties.creator,
@@ -98,4 +95,4 @@ with open('info', 'xt') as out:
 #              wb.properties.last_modified_by or '',
 #              sep='\t', file=out)
 #        wb.close()
-        
+
