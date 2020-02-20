@@ -8,6 +8,7 @@ from collections import namedtuple
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
 from allgrades import allgrades
+from modderupdate import checkmodder, Status
 import IPython
 from traitlets.config import get_config
 
@@ -49,11 +50,14 @@ for subfile in subfiles:
             fdata = io.BytesIO(subs.read(filename))
             codename = filename[:filename.find('_')]
             wb = load_workbook(fdata, read_only=True)
-            info.append(Info(filename,
-                             wb.properties.created,
-                             wb.properties.creator,
-                             wb.properties.modified,
-                             wb.properties.last_modified_by or ''))
+            theinfo = Info(filename,
+                           wb.properties.created,
+                           wb.properties.creator,
+                           wb.properties.modified,
+                           wb.properties.last_modified_by or '')
+            info.append(theinfo)
+            stat = checkmodder(codename, theinfo.modder)
+            # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
