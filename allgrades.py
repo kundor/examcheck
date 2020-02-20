@@ -12,7 +12,7 @@ if not quizids:
 studict = {stu['id'] : stu['name'] for stu in students}
 scores = {}
 
-def printgrades(session, curl):
+def streamgrades(session, curl):
     while curl:
         with session.get(curl) as response:
             subs = response.json()['quiz_submissions']
@@ -42,11 +42,21 @@ def printgrades(session, curl):
                 print(f'Different score {thescore} seen for {stuname}, previously {scores[sid]}', file=sys.stderr)
                 if thescore < scores[sid]:
                     continue # keep max score in dictionary and output
-            print(f"{stuname}\t{round(thescore)}")
+            yield stuname, round(thescore)
             scores[sid] = thescore
 
-with canvas_session() as s:
-    for quizid in quizids:
-        curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
-        printgrades(s, curl)
+def printgrades(session, curl):
+    for stuname, score in streamgrades(session, curl):
+            print(f"{stuname}\t{score}")
+
+def allgrades(session, curl):
+    for _ in streamgrades(session, curl):
+        pass
+    return scores
+
+if __name__ == '__main__':
+    with canvas_session() as s:
+        for quizid in quizids:
+            curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
+            printgrades(s, curl)
 
