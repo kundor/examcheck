@@ -36,7 +36,6 @@ for subfile in subfiles:
                              wb.properties.creator,
                              wb.properties.modified,
                              wb.properties.last_modified_by or ''))
-            contents = set()
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
@@ -46,7 +45,10 @@ for subfile in subfiles:
                             if c.value is not None:
                                 cval = cleanval(c.value)
                                 if cval not in origcells:
-                                    contents.add(cval)
+                                    if cval not in cellfiles:
+                                        cellfiles[cval] = [filename]
+                                    else:
+                                        cellfiles[cval].append(filename)
                     print('----------', file=csv)
             wb.close()
             fdata.close()
