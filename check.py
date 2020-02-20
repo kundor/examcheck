@@ -22,7 +22,7 @@ while arg < len(sys.argv) and sys.argv[arg].isnumeric():
     quizids.append(int(sys.argv[arg]))
     arg += 1
 if not quizids:
-    sys.exit(f'Could not find any quiz IDs. Usage: {sys.argv[0]} <quizid(s)> <submission zip file(s)> <original Module file>')a
+    sys.exit(f'Could not find any quiz IDs. Usage: {sys.argv[0]} <quizid(s)> <submission zip file(s)> <original Module file>')
 
 subfiles = []
 if arg < len(sys.argv) - 1:
@@ -34,7 +34,7 @@ origfile = sys.argv[-1]
 
 print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
 
-Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder')
+Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder'))
 origcells = thecells(origfile)
 cellfiles = {}
 info = []
