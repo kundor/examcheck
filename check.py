@@ -44,7 +44,9 @@ for subfile in subfiles:
                         print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','), file=csv)
                         for c in row:
                             if c.value is not None:
-                                contents.add(cleanval(c.value))
+                                cval = cleanval(c.value)
+                                if cval not in origcells:
+                                    contents.add(cval)
                     print('----------', file=csv)
             wb.close()
             fdata.close()
