@@ -38,12 +38,18 @@ def alphaonly(string):
 def codename(student):
     return alphaonly(student['sortable_name'].lower())
 
-try:
-    with open('sections.json') as fil:
-        sections = json.load(fil)
-    sections = {sec['id'] : sec for sec in sections}
+def load_here_or_parent(filename):
+    try:
+        with open(filename) as fil:
+            return json.load(fil)
+    except IOError:
+        filename = os.path.join(os.pardir, filename)
+    try:
+        with open(filename) as fil:
+            return json.load(fil)
+    except:
+        warnings.warn('Unable to load ' + filename, RuntimeWarning)
 
-    with open('students.json') as fil:
-        students = json.load(fil)
-except:
-    warnings.warn('Unable to load sections.json and students.json', RuntimeWarning)
+sections = load_here_or_parent('sections.json')
+sections = {sec['id'] : sec for sec in sections}
+students = load_here_or_parent('students.json')
