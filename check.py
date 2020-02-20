@@ -7,6 +7,7 @@ import sys
 import datetime
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile, BadZipFile
+from collections import namedtuple
 from openpyxl import load_workbook
 from uniquecells import thecells, refpat, colpat, rowpat
 
@@ -18,6 +19,8 @@ else:
     subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
     print(f'Using file {subfiles[0]}', file=sys.stderr)
 origfile = sys.argv[-1]
+
+Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder')
 
 def alltags(xmlroot):
     tags = {}
@@ -45,6 +48,7 @@ def timeforms(tags, key):
 
 origcells = thecells(origfile)
 cellfiles = {}
+info = []
 
 with open('info', 'xt') as out:
     for subfile in subfiles:
@@ -76,6 +80,11 @@ with open('info', 'xt') as out:
                       mstamp,
                       tagval(tags, 'lastModifiedBy'),
                       sep='\t', file=out)
+                info.append(Info(filename,
+                                 dtime(tagval(tags, 'created')),
+                                 tagval(tags, 'creator'),
+                                 dtime(tagval(tags, 'modified')),
+                                 tagval(tags, 'lastModifiedBy')))
                 prop.close()
                 xlsx.close()
 
