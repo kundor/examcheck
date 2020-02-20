@@ -81,6 +81,12 @@ for subfile in subfiles:
 
             codename = filename[:filename.find('_')]
             wb = load_workbook(fdata, read_only=True)
+# could get info thus
+#           info.append(Info(filename,
+#                            wb.properties.created,
+#                            wb.properties.creator,
+#                            wb.properties.modified,
+#                            wb.properties.last_modified_by or ''))
             contents = set()
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
@@ -98,12 +104,4 @@ for subfile in subfiles:
             fdata.close()
 
 
-# might be worth it if we're already opening them (to convert to csv)
-#        wb = openpyxl.load_workbook(filename, read_only=True)
-#        info.append(Info(filename,
-#              wb.properties.created,
-#              wb.properties.creator,
-#              wb.properties.modified,
-#              wb.properties.last_modified_by or ''))
-#        wb.close()
 
