@@ -6,6 +6,7 @@ import signal
 import keyring
 import warnings
 import requests
+from pathlib import Path
 
 cuser = os.getenv('CANVASUSER')
 if cuser:
@@ -38,18 +39,24 @@ def alphaonly(string):
 def codename(student):
     return alphaonly(student['sortable_name'].lower())
 
-def load_here_or_parent(filename):
-    try:
-        with open(filename) as fil:
-            return json.load(fil)
-    except IOError:
-        filename = os.path.join(os.pardir, filename)
-    try:
-        with open(filename) as fil:
-            return json.load(fil)
-    except:
-        warnings.warn('Unable to load ' + filename, RuntimeWarning)
+def get_fid(filename):
+    """Try to open a file in the current directory, parent directory, or this file's location."""
+    dirs = ('', os.pardir, Path(__file__).parent.resolve())
+    for d in dirs:
+        try:
+            fid = open(os.path.join(d, filename))
+            return fid
+        except IOError:
+            continue
+    warnings.warn('Unable to load ' + filename, RuntimeWarning)
 
-sections = load_here_or_parent('sections.json')
-sections = {sec['id'] : sec for sec in sections}
-students = load_here_or_parent('students.json')
+def load_json(filename):
+    fid = get_fid(filename)
+    if fid:
+        json = json.load(fid)
+        fid.close()
+
+sections = load_json('sections.json') # None, if it can't be found
+if sections:
+    sections = {sec['id'] : sec for sec in sections}
+students = load_json('students.json')
