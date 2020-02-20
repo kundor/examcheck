@@ -150,7 +150,7 @@ def checkmodder(name, modder):
         return Status.Boo
     elif modder in ('Microsoft Office User', 'Microsoft Office 用户'):
         return Status.Approved
-    elif modder.strip().casefold() in [mname.strip().casefold() for mname in mflds]: # auto-approve
+    elif modder.strip().casefold() in [mname.strip().casefold() for mname in modders[name]]: # auto-approve
         return Status.Approved
     elif moddbag and (any(moddbag.issubset(obag) for obag in oldbags) or oldbags[0].issubset(moddbag)):
         print(f'Adding modder {modder} for user {stu["name"]}')
