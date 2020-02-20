@@ -2,7 +2,7 @@
 import sys
 import os
 import re
-from canvas import codename, students, alphaonly
+from canvas import codename, students, alphaonly, get_fid
 
 # Name equivalence classes
 namequivs = [{'Abby', 'Abigail'},
@@ -124,14 +124,7 @@ def emailmatch(stu, name):
 modders = {}
 
 def load_modders():
-    old = None
-    try:
-        old = open('all-modder')
-    except IOError:
-        try:
-            old = open(os.path.join(os.pardir, 'all-modder'))
-        except:
-            warnings.warn('Unable to load all-modder')
+    old = get_fid('all-modder')
     if old:
         for line in old:
             mflds = line[:-1].split('\t')
