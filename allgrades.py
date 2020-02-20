@@ -2,13 +2,6 @@
 
 from canvas import *
 
-try:
-    quizids = {int(arg) for arg in sys.argv[1:]}
-except ValueError:
-    sys.exit('Arguments must be quiz IDs (integers)')
-if not quizids:
-    sys.exit('Must specify at least one quiz ID')
-
 studict = {stu['id'] : stu['name'] for stu in students}
 scores = {}
 
@@ -55,6 +48,13 @@ def allgrades(session, curl):
     return scores
 
 if __name__ == '__main__':
+    try:
+        quizids = {int(arg) for arg in sys.argv[1:]}
+    except ValueError:
+        sys.exit('Arguments must be quiz IDs (integers)')
+    if not quizids:
+        sys.exit('Must specify at least one quiz ID')
+
     with canvas_session() as s:
         for quizid in quizids:
             curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
