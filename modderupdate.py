@@ -4,21 +4,6 @@ import os
 import re
 from canvas import codename, students, alphaonly
 
-if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
-    print('Must run in directory containing all-modder and students.json files')
-    sys.exit(2)
-
-if len(sys.argv) != 2:
-    print('Exactly one argument needed: directory to find modders from info file')
-    sys.exit(3)
-
-mdir = sys.argv[1]
-ifile = os.path.join(mdir, 'info')
-
-if not os.path.isdir(mdir) or not os.path.isfile(ifile):
-    print(f'Directory {mdir} does not exist or does not contain info file')
-    sys.exit(4)
-
 # Name equivalence classes
 namequivs = [{'Abby', 'Abigail'},
              {'Addy', 'Addison'},
@@ -137,59 +122,86 @@ def emailmatch(stu, name):
     return usernamematch(stu, user)
 
 modders = {}
-with open('all-modder', 'rt') as old:
-    for line in old:
-        mflds = line[:-1].split('\t')
-        modders[mflds[0]] = mflds[1:]
 
-with open(ifile, 'rt') as inf:
-    oname = ''
-    omodr = ''
-    for line in inf:
-        fields = line[:-1].split('\t')
-        name = fields[0]
-        name = name[:name.find('_')]
-        modder = fields[6]
-        if name == oname:
-            if modder == omodr:
-                print(f'{name} seen a second time; same modder {omodr}')
-            else:
-                print(f'{name} seen a second time; different modder {modder} vs. {omodr}')
-            continue
-        oname = name
-        omodr = modder
+def load_modders():
+    old = None
+    try:
+        old = open('all-modder')
+    except IOError:
         try:
-            stu = studict[name]
-        except KeyError:
-            print(name, 'not found in students.json.')
-            continue
-        if name not in modders:
-            print(name, 'not found in all-modder')
-            continue
-        moddbag = namebag(modder)
-        oldbags = [namebag(omod) for omod in modders[name]]
-        if modder in modders[name]:
-            continue
-        elif modder == 'Elizabeth L. Grulke':
-            continue
-        elif modder in ('Microsoft Office User', 'Microsoft Office 用户'):
-            modders[name].append(modder)
-        elif modder.strip().casefold() in [mname.strip().casefold() for mname in mflds]: # auto-approve
-            modders[name].append(modder)
-        elif moddbag and (any(moddbag.issubset(obag) for obag in oldbags) or oldbags[0].issubset(moddbag)):
-            print(f'Adding modder {modder} for user {stu["name"]}')
-            modders[name].append(modder)
-        elif usernamematch(stu, modder):
-            print(f'Adding "username" {modder} for user {stu["name"]}')
-            modders[name].append(modder)
-        elif emailmatch(stu, modder):
-            print(f'Approving email {modder} for user {stu["name"]}')
-            modders[name].append(modder)
-        else:
-            addit = input(f'User {stu["name"]}: modder {modder}. Add? ')
-            if addit.lower() in {'y', 'yes'}:
-                modders[name].append(modder)
+            old = open(os.path.join(os.pardir, 'all-modder'))
+        except:
+            warnings.warn('Unable to load all-modder')
+    if old:
+        for line in old:
+            mflds = line[:-1].split('\t')
+            modders[mflds[0]] = mflds[1:]
+        old.close()
 
-with open('allmod2', 'wt') as new:
-    for code, mods in modders.items():
-        new.write(code + '\t' + '\t'.join(mods) + '\n')
+load_modders()
+
+if __name__ = '__main__':
+    if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
+        sys.exit('Must run in directory containing all-modder and students.json files')
+
+    if len(sys.argv) != 2:
+        sys.exit('Exactly one argument needed: directory to find modders from info file')
+
+    mdir = sys.argv[1]
+    ifile = os.path.join(mdir, 'info')
+
+    if not os.path.isdir(mdir) or not os.path.isfile(ifile):
+        print(f'Directory {mdir} does not exist or does not contain info file')
+        sys.exit(4)
+
+    with open(ifile, 'rt') as inf:
+        oname = ''
+        omodr = ''
+        for line in inf:
+            fields = line[:-1].split('\t')
+            name = fields[0]
+            name = name[:name.find('_')]
+            modder = fields[6]
+            if name == oname:
+                if modder == omodr:
+                    print(f'{name} seen a second time; same modder {omodr}')
+                else:
+                    print(f'{name} seen a second time; different modder {modder} vs. {omodr}')
+                continue
+            oname = name
+            omodr = modder
+            try:
+                stu = studict[name]
+            except KeyError:
+                print(name, 'not found in students.json.')
+                continue
+            if name not in modders:
+                print(name, 'not found in all-modder')
+                continue
+            moddbag = namebag(modder)
+            oldbags = [namebag(omod) for omod in modders[name]]
+            if modder in modders[name]:
+                continue
+            elif modder == 'Elizabeth L. Grulke':
+                continue
+            elif modder in ('Microsoft Office User', 'Microsoft Office 用户'):
+                modders[name].append(modder)
+            elif modder.strip().casefold() in [mname.strip().casefold() for mname in mflds]: # auto-approve
+                modders[name].append(modder)
+            elif moddbag and (any(moddbag.issubset(obag) for obag in oldbags) or oldbags[0].issubset(moddbag)):
+                print(f'Adding modder {modder} for user {stu["name"]}')
+                modders[name].append(modder)
+            elif usernamematch(stu, modder):
+                print(f'Adding "username" {modder} for user {stu["name"]}')
+                modders[name].append(modder)
+            elif emailmatch(stu, modder):
+                print(f'Approving email {modder} for user {stu["name"]}')
+                modders[name].append(modder)
+            else:
+                addit = input(f'User {stu["name"]}: modder {modder}. Add? ')
+                if addit.lower() in {'y', 'yes'}:
+                    modders[name].append(modder)
+
+    with open('allmod2', 'wt') as new:
+        for code, mods in modders.items():
+            new.write(code + '\t' + '\t'.join(mods) + '\n')
