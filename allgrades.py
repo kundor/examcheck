@@ -5,7 +5,8 @@ from canvas import *
 studict = {stu['id'] : stu['name'] for stu in students}
 scores = {}
 
-def streamgrades(session, curl):
+def streamgrades(session, quizid):
+    curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
     while curl:
         with session.get(curl) as response:
             subs = response.json()['quiz_submissions']
@@ -38,13 +39,15 @@ def streamgrades(session, curl):
             yield stuname, round(thescore)
             scores[sid] = thescore
 
-def printgrades(session, curl):
-    for stuname, score in streamgrades(session, curl):
+def printgrades(session, quizid):
+    for stuname, score in streamgrades(session, quizid):
             print(f"{stuname}\t{score}")
 
-def allgrades(session, curl):
-    for _ in streamgrades(session, curl):
-        pass
+def allgrades(quizids):
+    with canvas_session() as session:
+        for quizid in quizids:
+            for _ in streamgrades(session, quizid):
+                pass
     return scores
 
 if __name__ == '__main__':
@@ -57,6 +60,5 @@ if __name__ == '__main__':
 
     with canvas_session() as s:
         for quizid in quizids:
-            curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
-            printgrades(s, curl)
+            printgrades(s, quizid)
 
