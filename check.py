@@ -7,6 +7,10 @@ from zipfile import ZipFile
 from collections import namedtuple
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
+import IPython
+from traitlets.config import get_config
+
+sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
 if len(sys.argv <= 1):
     sys.exit('Arguments: <submission zip file(s)> <original Module file>')
@@ -53,5 +57,6 @@ for subfile in subfiles:
             wb.close()
             fdata.close()
 
-
-
+c = get_config()
+c.InteractiveShellEmbed.colors = "Linux"
+IPython.embed(config=c)
