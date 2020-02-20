@@ -8,12 +8,16 @@ import datetime
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile, BadZipFile
 from openpyxl import load_workbook
+from uniquecells import thecells, refpat, colpat, rowpat
 
-if len(sys.argv) > 1:
-    subfiles = sys.argv[1:]
+if len(sys.argv <= 1):
+    sys.exit('Arguments: <submission zip file(s)> <original Module file>')
+if len(sys.argv) > 2:
+    subfiles = sys.argv[1:-1]
 else:
     subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
     print(f'Using file {subfiles[0]}', file=sys.stderr)
+origfile = sys.argv[-1]
 
 def alltags(xmlroot):
     tags = {}
@@ -38,6 +42,9 @@ def timeforms(tags, key):
         thetime = dtime(thetime)
         return round(thetime.timestamp()), thetime.strftime('%m/%d/%Y %I:%M:%S %p')
     return thetime, thetime
+
+origcells = thecells(origfile)
+cellfiles = {}
 
 with open('info', 'xt') as out:
     for subfile in subfiles:
@@ -74,11 +81,18 @@ with open('info', 'xt') as out:
 
                 codename = filename[:filename.find('_')]
                 wb = load_workbook(fdata, read_only=True)
+                contents = set()
                 with open(codename + '.csv', 'wt') as csv:
                     for ws in wb.worksheets:
                         ws.reset_dimensions()
                         for row in ws.rows:
                             print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','), file=csv)
+                            for c in row:
+                                if c.value is not None:
+                                    cval = refpat.sub('REF', str(c.value))
+                                    cval = colpat.sub('COL', cval)
+                                    cval = rowpat.sub('ROW', cval)
+                                    contents.add(cval)
                         print('----------', file=csv)
                 wb.close()
                 fdata.close()
