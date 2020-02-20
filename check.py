@@ -11,9 +11,7 @@ from allgrades import allgrades
 import IPython
 from traitlets.config import get_config
 
-sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
-
-if len(sys.argv <= 2):
+if len(sys.argv) <= 2:
     sys.exit('Arguments: <quizid(s)> <submission zip file(s)> <original Module file>')
 arg = 1
 
@@ -33,6 +31,8 @@ else:
 origfile = sys.argv[-1]
 
 print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
+
+sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
 Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder'))
 origcells = thecells(origfile)
