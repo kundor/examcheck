@@ -47,14 +47,13 @@ def get_fid(filename):
             return open(os.path.join(d, filename))
         except IOError:
             continue
-    warnings.warn('Unable to load ' + filename, RuntimeWarning)
 
 def load_file(filename, loader):
-    fid = get_fid(filename)
-    if fid:
-        data = loader(fid)
-        fid.close()
-        return data
+    try:
+        with get_fid(filename) as fid:
+            return loader(fid)
+    except:
+        warnings.warn('Unable to load ' + filename, RuntimeWarning)
 
 sections = load_file('sections.json', json.load) # None, if it can't be found
 if sections:
