@@ -50,72 +50,60 @@ origcells = thecells(origfile)
 cellfiles = {}
 info = []
 
-with open('info', 'xt') as out:
-    for subfile in subfiles:
-        with ZipFile(subfile, 'r') as subs:
-            for filename in sorted(subs.namelist()):
-                if not filename.endswith('.xlsx'):
-                    print('Not a xlsx file: ' + filename, file=sys.stderr)
-                    continue
-                fdata = io.BytesIO(subs.read(filename))
-                try:
-                    xlsx = ZipFile(fdata, 'r')
-                except BadZipFile as e:
-                    print(filename, 'is not a zip file?', e, file=sys.stderr)
-                    continue
-                try:
-                    prop = xlsx.open('docProps/core.xml', 'r')
-                except KeyError:
-                    print('Metadata not found (file docProps/core.xml missing) in file ' + filename, file=sys.stderr)
-                    continue
-                tree = ET.parse(prop)
-                tags = alltags(tree.getroot()) 
-                mstamp, mtime = timeforms(tags, 'modified')
-                cstamp, ctime = timeforms(tags, 'created')
-                print(filename,
-                      ctime,
-                      cstamp,
-                      tagval(tags, 'creator'),
-                      mtime,
-                      mstamp,
-                      tagval(tags, 'lastModifiedBy'),
-                      sep='\t', file=out)
-                info.append(Info(filename,
-                                 dtime(tagval(tags, 'created')),
-                                 tagval(tags, 'creator'),
-                                 dtime(tagval(tags, 'modified')),
-                                 tagval(tags, 'lastModifiedBy')))
-                prop.close()
-                xlsx.close()
+for subfile in subfiles:
+    with ZipFile(subfile, 'r') as subs:
+        for filename in sorted(subs.namelist()):
+            if not filename.endswith('.xlsx'):
+                print('Not a xlsx file: ' + filename, file=sys.stderr)
+                continue
+            fdata = io.BytesIO(subs.read(filename))
+            try:
+                xlsx = ZipFile(fdata, 'r')
+            except BadZipFile as e:
+                print(filename, 'is not a zip file?', e, file=sys.stderr)
+                continue
+            try:
+                prop = xlsx.open('docProps/core.xml', 'r')
+            except KeyError:
+                print('Metadata not found (file docProps/core.xml missing) in file ' + filename, file=sys.stderr)
+                continue
+            tree = ET.parse(prop)
+            tags = alltags(tree.getroot()) 
+            mstamp, mtime = timeforms(tags, 'modified')
+            cstamp, ctime = timeforms(tags, 'created')
+            info.append(Info(filename,
+                             dtime(tagval(tags, 'created')),
+                             tagval(tags, 'creator'),
+                             dtime(tagval(tags, 'modified')),
+                             tagval(tags, 'lastModifiedBy')))
+            prop.close()
+            xlsx.close()
 
-                codename = filename[:filename.find('_')]
-                wb = load_workbook(fdata, read_only=True)
-                contents = set()
-                with open(codename + '.csv', 'wt') as csv:
-                    for ws in wb.worksheets:
-                        ws.reset_dimensions()
-                        for row in ws.rows:
-                            print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','), file=csv)
-                            for c in row:
-                                if c.value is not None:
-                                    cval = refpat.sub('REF', str(c.value))
-                                    cval = colpat.sub('COL', cval)
-                                    cval = rowpat.sub('ROW', cval)
-                                    contents.add(cval)
-                        print('----------', file=csv)
-                wb.close()
-                fdata.close()
+            codename = filename[:filename.find('_')]
+            wb = load_workbook(fdata, read_only=True)
+            contents = set()
+            with open(codename + '.csv', 'wt') as csv:
+                for ws in wb.worksheets:
+                    ws.reset_dimensions()
+                    for row in ws.rows:
+                        print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','), file=csv)
+                        for c in row:
+                            if c.value is not None:
+                                cval = refpat.sub('REF', str(c.value))
+                                cval = colpat.sub('COL', cval)
+                                cval = rowpat.sub('ROW', cval)
+                                contents.add(cval)
+                    print('----------', file=csv)
+            wb.close()
+            fdata.close()
 
 
 # might be worth it if we're already opening them (to convert to csv)
 #        wb = openpyxl.load_workbook(filename, read_only=True)
-#        print(filename, 
-#              wb.properties.created.strftime('%m/%d/%Y %I:%M:%S %p'),
-#              round(wb.properties.created.replace(tzinfo=datetime.timezone.utc).timestamp()),
+#        info.append(Info(filename,
+#              wb.properties.created,
 #              wb.properties.creator,
-#              wb.properties.modified.strftime('%m/%d/%Y %I:%M:%S %p'),
-#              round(wb.properties.modified.replace(tzinfo=datetime.timezone.utc).timestamp()),
-#              wb.properties.last_modified_by or '',
-#              sep='\t', file=out)
+#              wb.properties.modified,
+#              wb.properties.last_modified_by or ''))
 #        wb.close()
 
