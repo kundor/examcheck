@@ -2,7 +2,7 @@
 import sys
 import os
 import re
-from canvas import codename, students, alphaonly, get_fid
+from canvas import codename, students, alphaonly, load_file
 
 # Name equivalence classes
 namequivs = [{'Abby', 'Abigail'},
@@ -121,17 +121,14 @@ def emailmatch(stu, name):
         return False
     return usernamematch(stu, user)
 
-modders = {}
+def loadmod(fid):
+    modders = {}
+    for line in fid:
+        mflds = line[:-1].split('\t')
+        modders[mflds[0]] = mflds[1:]
+    return modders
 
-def load_modders():
-    old = get_fid('all-modder')
-    if old:
-        for line in old:
-            mflds = line[:-1].split('\t')
-            modders[mflds[0]] = mflds[1:]
-        old.close()
-
-load_modders()
+modders = load_file('all-modder', loadmod)
 
 if __name__ = '__main__':
     if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
