@@ -6,7 +6,7 @@ import sys
 from zipfile import ZipFile
 from collections import namedtuple
 from openpyxl import load_workbook
-from uniquecells import thecells, refpat, colpat, rowpat
+from uniquecells import thecells, cleanval
 
 if len(sys.argv <= 1):
     sys.exit('Arguments: <submission zip file(s)> <original Module file>')
@@ -44,10 +44,7 @@ for subfile in subfiles:
                         print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','), file=csv)
                         for c in row:
                             if c.value is not None:
-                                cval = refpat.sub('REF', str(c.value))
-                                cval = colpat.sub('COL', cval)
-                                cval = rowpat.sub('ROW', cval)
-                                contents.add(cval)
+                                contents.add(cleanval(c.value))
                     print('----------', file=csv)
             wb.close()
             fdata.close()

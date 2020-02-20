@@ -9,6 +9,13 @@ refpat = re.compile(r"\$?[A-Z]{1,3}\$?[0-9]{1,5}")
 colpat = re.compile(r"(\$?[A-Z]{1,3}):\1")
 rowpat = re.compile(r"(\$?[0-9]{1,5}):\1")
 
+def cleanval(cellval):
+    cval = str(cellval)
+    cval = refpat.sub('REF', cval)
+    cval = colpat.sub('COL', cval)
+    cval = rowpat.sub('ROW', cval)
+    return cval
+
 def thecells(filename):
     contents = set()
     wb = load_workbook(filename=filename, read_only=True)
@@ -17,10 +24,7 @@ def thecells(filename):
         for row in ws.rows:
             for c in row:
                 if c.value is not None:
-                    cval = refpat.sub('REF', str(c.value))
-                    cval = colpat.sub('COL', cval)
-                    cval = rowpat.sub('ROW', cval)
-                    contents.add(cval)
+                    contents.add(cleanval(c.value))
     wb.close()
     return contents
 
