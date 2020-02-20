@@ -7,6 +7,7 @@ from zipfile import ZipFile
 from collections import namedtuple
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
+from allgrades import allgrades
 import IPython
 from traitlets.config import get_config
 
@@ -37,6 +38,7 @@ Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modde
 origcells = thecells(origfile)
 cellfiles = {}
 info = []
+grades = allgrades(quizids)
 
 for subfile in subfiles:
     with ZipFile(subfile, 'r') as subs:
