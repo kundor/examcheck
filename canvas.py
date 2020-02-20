@@ -44,19 +44,19 @@ def get_fid(filename):
     dirs = ('', os.pardir, Path(__file__).parent.resolve())
     for d in dirs:
         try:
-            fid = open(os.path.join(d, filename))
-            return fid
+            return open(os.path.join(d, filename))
         except IOError:
             continue
     warnings.warn('Unable to load ' + filename, RuntimeWarning)
 
-def load_json(filename):
+def load_file(filename, loader):
     fid = get_fid(filename)
     if fid:
-        json = json.load(fid)
+        data = loader(fid)
         fid.close()
+        return data
 
-sections = load_json('sections.json') # None, if it can't be found
+sections = load_file('sections.json', json.load) # None, if it can't be found
 if sections:
     sections = {sec['id'] : sec for sec in sections}
-students = load_json('students.json')
+students = load_file('students.json', json.load)
