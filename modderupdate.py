@@ -2,7 +2,10 @@
 import sys
 import os
 import re
+from enum import Enum
 from canvas import codename, students, alphaonly, load_file
+
+Status = Enum('Status', ('Found', 'Approved', 'DNE', 'Boo', 'Unknown'))
 
 # Name equivalence classes
 namequivs = [{'Abby', 'Abigail'},
@@ -130,6 +133,36 @@ def loadmod(fid):
 
 modders = load_file('all-modder', loadmod)
 
+def checkmodder(name, modder):
+    try:
+        stu = studict[name]
+    except KeyError:
+        print(name, 'not found in students.json.')
+        return Status.DNE
+    if name not in modders:
+        print(name, 'not found in all-modder')
+        return Status.DNE
+    moddbag = namebag(modder)
+    oldbags = [namebag(omod) for omod in modders[name]]
+    if modder in modders[name]:
+        return Status.Found
+    elif modder == 'Elizabeth L. Grulke':
+        return Status.Boo
+    elif modder in ('Microsoft Office User', 'Microsoft Office 用户'):
+        return Status.Approved
+    elif modder.strip().casefold() in [mname.strip().casefold() for mname in mflds]: # auto-approve
+        return Status.Approved
+    elif moddbag and (any(moddbag.issubset(obag) for obag in oldbags) or oldbags[0].issubset(moddbag)):
+        print(f'Adding modder {modder} for user {stu["name"]}')
+        return Status.Approved
+    elif usernamematch(stu, modder):
+        print(f'Adding "username" {modder} for user {stu["name"]}')
+        return Status.Approved
+    elif emailmatch(stu, modder):
+        print(f'Approving email {modder} for user {stu["name"]}')
+        return Status.Approved
+    return Status.Unknown
+
 if __name__ = '__main__':
     if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
         sys.exit('Must run in directory containing all-modder and students.json files')
@@ -141,8 +174,7 @@ if __name__ = '__main__':
     ifile = os.path.join(mdir, 'info')
 
     if not os.path.isdir(mdir) or not os.path.isfile(ifile):
-        print(f'Directory {mdir} does not exist or does not contain info file')
-        sys.exit(4)
+        sys.exit(f'Directory {mdir} does not exist or does not contain info file')
 
     with open(ifile, 'rt') as inf:
         oname = ''
@@ -160,34 +192,10 @@ if __name__ = '__main__':
                 continue
             oname = name
             omodr = modder
-            try:
-                stu = studict[name]
-            except KeyError:
-                print(name, 'not found in students.json.')
-                continue
-            if name not in modders:
-                print(name, 'not found in all-modder')
-                continue
-            moddbag = namebag(modder)
-            oldbags = [namebag(omod) for omod in modders[name]]
-            if modder in modders[name]:
-                continue
-            elif modder == 'Elizabeth L. Grulke':
-                continue
-            elif modder in ('Microsoft Office User', 'Microsoft Office 用户'):
+            stat = checkmod(name, modder)
+            if stat is Status.Approved:
                 modders[name].append(modder)
-            elif modder.strip().casefold() in [mname.strip().casefold() for mname in mflds]: # auto-approve
-                modders[name].append(modder)
-            elif moddbag and (any(moddbag.issubset(obag) for obag in oldbags) or oldbags[0].issubset(moddbag)):
-                print(f'Adding modder {modder} for user {stu["name"]}')
-                modders[name].append(modder)
-            elif usernamematch(stu, modder):
-                print(f'Adding "username" {modder} for user {stu["name"]}')
-                modders[name].append(modder)
-            elif emailmatch(stu, modder):
-                print(f'Approving email {modder} for user {stu["name"]}')
-                modders[name].append(modder)
-            else:
+            elif stat is Status.Unknown:
                 addit = input(f'User {stu["name"]}: modder {modder}. Add? ')
                 if addit.lower() in {'y', 'yes'}:
                     modders[name].append(modder)
