@@ -37,7 +37,19 @@ print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {ori
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
 Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder'))
-origcells = thecells(origfile)
+
+def getinfo(workbook):
+    return Info(filename,
+                workbook.properties.created,
+                workbook.properties.creator,
+                workbook.properties.modified,
+                workbook.properties.last_modified_by or '')
+
+origwb = load_workbook(origfile, read_only=True)
+origcells = thecells(origwb)
+originfo = getinfo(origwb)
+origwb.close()
+
 cellfiles = {}
 infos = []
 grades = allgrades(quizids)
@@ -61,12 +73,7 @@ for subfile in subfiles:
             except BadZipFile as e:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
-            info = Info(filename,
-                        wb.properties.created,
-                        wb.properties.creator,
-                        wb.properties.modified,
-                        wb.properties.last_modified_by or '')
-            infos.append(info)
+            infos.append(getinfo(wb))
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
