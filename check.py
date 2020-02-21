@@ -100,7 +100,7 @@ for info in infos:
         continue
     stu = studict[codename]
     if stat is Status.Unknown:
-        addit = input(f'User {stu["name"]}: modder {info.modder}. Add? ')
+        addit = input(f"User {stu['name']}: modder '{info.modder}'. Add? ")
         if addit.lower() in {'y', 'yes'}:
             modders[codename].append(info.modder)
 
