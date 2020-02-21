@@ -46,7 +46,10 @@ def wrapchanged(label, old, new, keys, width, maxkeylen):
                 if sorted(old[key]) == sorted(new[key]):
                     continue
             blocks.append(f'{key}: {old[key]} -> {new[key]}')
+    if len(blocks) == 1:
+        return False # no real changes, just ordering
     wrapblocks(blocks, width)
+    return True
 
 def wrapblocks(blocks, width, indent="    "):
     # todo: figure out value lengths (from all records) so that all the entries are lined up the same way
@@ -88,18 +91,23 @@ def comparelists(oldlist, newlist, primary_key=None):
     old = {o[primary_key]: o for o in oldlist}
     new = {n[primary_key]: n for n in newlist}
     maxkeylen = max(len(str(k)) for k in old.keys() | new.keys())
+    realdiff = False
     if old.keys() - new.keys():
         print(Fore.RED + 'Only in old:' + Fore.RESET)
         for key in old.keys() - new.keys():
             wrapdict(key, old[key], thekeys - {primary_key}, width, maxkeylen)
+        realdiff = True
     if new.keys() - old.keys():
         print(Fore.GREEN + 'Only in new:' + Fore.RESET)
         for key in new.keys() - old.keys():
             wrapdict(key, new[key], thekeys - {primary_key}, width, maxkeylen)
+        realdiff = True
     print(Fore.YELLOW + 'Changes:' + Fore.RESET)
     for key in old.keys() & new.keys():
         if old[key] != new[key]:
-            wrapchanged(key, old[key], new[key], thekeys - {primary_key}, width, maxkeylen)
+            if wrapchanged(key, old[key], new[key], thekeys - {primary_key}, width, maxkeylen):
+                realdiff = True
+    return realdiff
 
 def diffwrite(filename, data, as_string=None, loader=json.load):
     if not as_string:
@@ -111,7 +119,10 @@ def diffwrite(filename, data, as_string=None, loader=json.load):
     except FileExistsError:
         with open(filename) as fil:
             old_data = loader(fil)
-        comparelists(old_data, data)
+        print(f' ** {filename} **')
+        if not comparelists(old_data, data):
+            print('No difference, doing nothing')
+            return
         while True:
             answer = input('Clobber old file? [B]ackup/[c]lobber/do [n]othing: ').lower()
             if 'backup'.startswith(answer): # includes blank answer
