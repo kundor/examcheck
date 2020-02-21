@@ -18,14 +18,18 @@ def cleanval(cellval):
 
 def thecells(filename):
     contents = set()
-    wb = load_workbook(filename=filename, read_only=True)
+    if hasattr(filename, 'worksheets'): # an openpyxl workbook was passed in
+        wb = filename
+    else:
+        wb = load_workbook(filename=filename, read_only=True)
     for ws in wb.worksheets:
         #ws.reset_dimensions()
         for row in ws.rows:
             for c in row:
                 if c.value is not None:
                     contents.add(cleanval(c.value))
-    wb.close()
+    if wb is not filename:
+        wb.close()
     return contents
 
 
