@@ -34,6 +34,17 @@ origfile = sys.argv[-1]
 
 print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
 
+# TODO: download the submissions here
+# Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
+# However, it only gives an HTML page with authentication error :(
+# https://community.canvaslms.com/thread/10824
+
+# Future plan: make working directory /tmp/examcheck; remove any files
+# download each submission as it comes in, a la secdownload
+# process the file in memory. instead of writing csv, feed cells as tokens to simhash and save the simhash, xlhash, csvhash
+# if there's any problem to report, write out the .xlsx and .csv files. I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
+# also re-download uniquecell cluster members.
+
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
 Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder'))
