@@ -3,7 +3,8 @@
 import io
 import os
 import sys
-from zipfile import ZipFile
+import subprocess
+from zipfile import ZipFile, BadZipFile
 from collections import namedtuple
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
@@ -44,10 +45,16 @@ grades = allgrades(quizids)
 for subfile in subfiles:
     with ZipFile(subfile, 'r') as subs:
         for filename in sorted(subs.namelist()):
-            if not filename.endswith('.xlsx'):
+            if filename.endswith('.xlsx'):
+                fdata = io.BytesIO(subs.read(filename))
+            elif filename.endswith('.xls'):
+                print(f'Converting {filename} to xlsx', file=sys.stderr)
+                subs.extract(filename)
+                subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename])
+                fdata = open(filename[:-1])
+            else:
                 print('Not a xlsx file: ' + filename, file=sys.stderr)
                 continue
-            fdata = io.BytesIO(subs.read(filename))
             codename = filename[:filename.find('_')]
             try:
                 wb = load_workbook(fdata, read_only=True)
