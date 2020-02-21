@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -i
+#!/usr/bin/python3
 
 import io
 import os
@@ -49,7 +49,11 @@ for subfile in subfiles:
                 continue
             fdata = io.BytesIO(subs.read(filename))
             codename = filename[:filename.find('_')]
-            wb = load_workbook(fdata, read_only=True)
+            try:
+                wb = load_workbook(fdata, read_only=True)
+            except BadZipFile as e:
+                print(filename, 'is not a zip file?', e, file=sys.stderr)
+                continue
             theinfo = Info(filename,
                            wb.properties.created,
                            wb.properties.creator,
