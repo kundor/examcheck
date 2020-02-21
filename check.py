@@ -51,7 +51,7 @@ for subfile in subfiles:
                 print(f'Converting {filename} to xlsx', file=sys.stderr)
                 subs.extract(filename)
                 subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename])
-                fdata = open(filename + 'x')
+                fdata = open(filename + 'x', 'rb')
             else:
                 print('Not a xlsx file: ' + filename, file=sys.stderr)
                 continue
