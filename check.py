@@ -9,7 +9,7 @@ from collections import namedtuple
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
 from allgrades import allgrades
-from modderupdate import checkmodder, Status
+from modderupdate import checkmodder, Status, modders, studict
 import IPython
 from traitlets.config import get_config
 
@@ -39,7 +39,7 @@ sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='
 Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder'))
 origcells = thecells(origfile)
 cellfiles = {}
-info = []
+infos = []
 grades = allgrades(quizids)
 
 for subfile in subfiles:
@@ -61,14 +61,12 @@ for subfile in subfiles:
             except BadZipFile as e:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
-            theinfo = Info(filename,
-                           wb.properties.created,
-                           wb.properties.creator,
-                           wb.properties.modified,
-                           wb.properties.last_modified_by or '')
-            info.append(theinfo)
-            stat = checkmodder(codename, theinfo.modder)
-            # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
+            info = Info(filename,
+                        wb.properties.created,
+                        wb.properties.creator,
+                        wb.properties.modified,
+                        wb.properties.last_modified_by or '')
+            infos.append(info)
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
@@ -85,6 +83,22 @@ for subfile in subfiles:
                     print('----------', file=csv)
             wb.close()
             fdata.close()
+
+for info in infos:
+    # Update all modder names afterward, so the long conversion process isn't held up by prompts
+    codename = info.filename[:info.filename.find('_')]
+    stat = checkmodder(codename, info.modder)
+    # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
+    if stat is Status.DNE:
+        continue
+    stu = studict[codename]
+    if stat is Status.Unknown:
+        addit = input(f'User {stu["name"]}: modder {info.modder}. Add? ')
+        if addit.lower() in {'y', 'yes'}:
+            modders[codename].append(info.modder)
+
+
+
 
 c = get_config()
 c.InteractiveShellEmbed.colors = "Linux"
