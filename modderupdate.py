@@ -163,7 +163,7 @@ def checkmodder(name, modder):
         return Status.Approved
     return Status.Unknown
 
-if __name__ = '__main__':
+if __name__ == '__main__':
     if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
         sys.exit('Must run in directory containing all-modder and students.json files')
 
