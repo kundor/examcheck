@@ -142,6 +142,8 @@ def diffwrite(filename, data, as_string=None, loader=json.load):
             print(f"I don't understand '{answer}'!")
 
 def namelist(stuids, color='', studict, addsec=False):
+    """Given a list of IDs, print names [and sections if requested] in given color,
+       if found in studict; otherwise just the id."""
     reset = ''
     if color:
         reset = Fore.RESET
