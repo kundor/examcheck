@@ -7,6 +7,8 @@ import keyring
 import warnings
 import requests
 from pathlib import Path
+from datetime import date
+from dateutil.parser import isoparse
 
 cuser = os.getenv('CANVASUSER')
 if cuser:

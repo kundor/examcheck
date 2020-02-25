@@ -2,8 +2,6 @@
 
 from canvas import *
 import shutil
-from datetime import date
-from dateutil.parser import isoparse
 
 savedir = None
 

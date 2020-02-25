@@ -2,8 +2,6 @@
 
 import IPython
 from canvas import *
-from datetime import date
-from dateutil.parser import isoparse
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
