@@ -201,104 +201,105 @@ def getenrolled(session, enroll_type):
             curl = response.links.get('next', {}).get('url')
     return enrolled
 
-with canvas_session() as session:
-    teachers = []
-    for tch in getenrolled(session, 'teacher'):
-        try:
-            thesections = sorted(([ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(1))
-            teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': thesections}]
-        except KeyError:
-            print('Problem with record:', tch)
+if __name__ == '__main__':
+    with canvas_session() as session:
+        teachers = []
+        for tch in getenrolled(session, 'teacher'):
+            try:
+                thesections = sorted(([ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(1))
+                teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': thesections}]
+            except KeyError:
+                print('Problem with record:', tch)
 
-    # Boo is in every section
-    osecs = []
-    for t in teachers:
-        if t['name'] == 'Elizabeth Grulke':
-            continue
-        osecs += t['sections']
-    for t in teachers:
-        if t['name'] == 'Elizabeth Grulke':
-            t['sections'] = sorted((sec for sec in t['sections'] if sec not in osecs), key=itemgetter(1))
+        # Boo is in every section
+        osecs = []
+        for t in teachers:
+            if t['name'] == 'Elizabeth Grulke':
+                continue
+            osecs += t['sections']
+        for t in teachers:
+            if t['name'] == 'Elizabeth Grulke':
+                t['sections'] = sorted((sec for sec in t['sections'] if sec not in osecs), key=itemgetter(1))
 
-    sectch = {sec[1]: tch['name'] for tch in teachers for sec in tch['sections']}
-    for sec in sorted(sectch):
-       print(f"{sec}: {sectch[sec]}")
+        sectch = {sec[1]: tch['name'] for tch in teachers for sec in tch['sections']}
+        for sec in sorted(sectch):
+           print(f"{sec}: {sectch[sec]}")
 
-    while True:
-        secnum = input("Change section? ")
-        if not secnum:
-            break
-        if secnum not in sectch:
-            print("Not a section. (Enter nothing to continue)")
-            continue
-        newname = input('Correct teacher? ')
-        if newname not in sectch.values():
-            print('Not a teacher?!?')
-            continue
-        oldteacher = next(t for t in teachers if t['name'] == sectch[secnum])
-        newteacher = next(t for t in teachers if t['name'] == newname)
-        thesection = next(sec for sec in oldteacher['sections'] if sec[1] == secnum)
-        oldteacher['sections'].remove(thesection)
-        newteacher['sections'].append(thesection)
+        while True:
+            secnum = input("Change section? ")
+            if not secnum:
+                break
+            if secnum not in sectch:
+                print("Not a section. (Enter nothing to continue)")
+                continue
+            newname = input('Correct teacher? ')
+            if newname not in sectch.values():
+                print('Not a teacher?!?')
+                continue
+            oldteacher = next(t for t in teachers if t['name'] == sectch[secnum])
+            newteacher = next(t for t in teachers if t['name'] == newname)
+            thesection = next(sec for sec in oldteacher['sections'] if sec[1] == secnum)
+            oldteacher['sections'].remove(thesection)
+            newteacher['sections'].append(thesection)
 
-    teacherdat = json.dumps(teachers, indent=2).replace('{\n    "id"', '{ "id"')
-    teacherdat = re.sub(r'\[\s*([0-9]*),\s*("[\w-]*")\s*\]', r'[ \1, \2 ]', teacherdat)
-    diffwrite('teachers.json', teachers, teacherdat)
-    # Fix: sometimes extra teachers are present
-
-
-    stuen = getenrolled(session, 'student')
-    keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
-    studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
-                       **{k: stu[k] for k in keys}) for stu in stuen] 
-    diffwrite('students.json', studentinf)
-
-    studict = {stu['id'] : stu for stu in studentinf}
-
-    curl = canvasbase + f'courses/{courseid}/sections'
-    with session.get(curl, params={'include[]': 'students'}) as response:
-        rj = response.json()
-    keys = ['id', 'name', 'sis_section_id']
-    sections = [dict(allstudents=[st['id'] for st in rec['students']],
-                     students=sorted(stu['id'] for stu in studentinf if stu['section'] == rec['name'][10:]),
-                     teacher=sectch[rec['name'][10:]],
-                     **{k : rec[k] for k in keys}) for rec in rj if rec['students']]
-    for sec in sections:
-        allstus = set(sec['allstudents'])
-        secstus = set(sec['students'])
-        if allstus != secstus:
-            msg = f'Section {sec["name"]}: not including {namelist(allstus - secstus, Fore.RED, studict, True)}'
-            if secstus - allstus:
-                msg += f'also including {namelist(secstus - allstus, Fore.GREEN, studict, False)}'
-            print(msg)
-        del sec['allstudents']
-    sectiondat = json.dumps(sections, sort_keys=True, indent=1)
-    sectiondat = re.sub('\n   ', ' ', sectiondat)
-    sectiondat = re.sub('\n  \]', ']', sectiondat)
-    sectiondat = re.sub('\[ ', '[', sectiondat)
-    sectiondat = re.sub('\n  "id"', '"id"', sectiondat)
-    sectiondat = re.sub('\[\n {', '[{', sectiondat)
-    sectiondat = re.sub('"\n }', '"}', sectiondat)
-    diffwrite('sections.json', sections, sectiondat)
-
-    examid, altid, uploadid = getgroups(session)
+        teacherdat = json.dumps(teachers, indent=2).replace('{\n    "id"', '{ "id"')
+        teacherdat = re.sub(r'\[\s*([0-9]*),\s*("[\w-]*")\s*\]', r'[ \1, \2 ]', teacherdat)
+        diffwrite('teachers.json', teachers, teacherdat)
+        # Fix: sometimes extra teachers are present
 
 
-allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
-allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
-diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
+        stuen = getenrolled(session, 'student')
+        keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
+        studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
+                           **{k: stu[k] for k in keys}) for stu in stuen] 
+        diffwrite('students.json', studentinf)
 
-instsec = [{'name': tch['name'], 'sections': sorted(sec[1] for sec in tch['sections'])} for tch in teachers]
-instsecstr = '\n'.join(tch['name'] + '\t' + '\t'.join(tch['sections']) for tch in instsec) + '\n'
-diffwrite('instructor-sections', instsec, instsecstr, loader=TabLoader('name', 'sections', varlength=True))
+        studict = {stu['id'] : stu for stu in studentinf}
 
-if input('Create all-modder with full names? ').casefold() in {'y', 'yes'}:
-    with open('all-modder', 'wt') as fid:
-        for stu in studentinf:
-            fid.write(codename(stu) + '\t' + stu['name'] + '\n')
-else:
-    print('Not making all-modder. (`cut -f -2 allnames > all-modder` has same effect)')
+        curl = canvasbase + f'courses/{courseid}/sections'
+        with session.get(curl, params={'include[]': 'students'}) as response:
+            rj = response.json()
+        keys = ['id', 'name', 'sis_section_id']
+        sections = [dict(allstudents=[st['id'] for st in rec['students']],
+                         students=sorted(stu['id'] for stu in studentinf if stu['section'] == rec['name'][10:]),
+                         teacher=sectch[rec['name'][10:]],
+                         **{k : rec[k] for k in keys}) for rec in rj if rec['students']]
+        for sec in sections:
+            allstus = set(sec['allstudents'])
+            secstus = set(sec['students'])
+            if allstus != secstus:
+                msg = f'Section {sec["name"]}: not including {namelist(allstus - secstus, Fore.RED, studict, True)}'
+                if secstus - allstus:
+                    msg += f'also including {namelist(secstus - allstus, Fore.GREEN, studict, False)}'
+                print(msg)
+            del sec['allstudents']
+        sectiondat = json.dumps(sections, sort_keys=True, indent=1)
+        sectiondat = re.sub('\n   ', ' ', sectiondat)
+        sectiondat = re.sub('\n  \]', ']', sectiondat)
+        sectiondat = re.sub('\[ ', '[', sectiondat)
+        sectiondat = re.sub('\n  "id"', '"id"', sectiondat)
+        sectiondat = re.sub('\[\n {', '[{', sectiondat)
+        sectiondat = re.sub('"\n }', '"}', sectiondat)
+        diffwrite('sections.json', sections, sectiondat)
 
-c = get_config()
-c.InteractiveShellEmbed.colors = "Linux"
-IPython.embed(config=c)
+        examid, altid, uploadid = getgroups(session)
+
+
+    allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
+    allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
+    diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
+
+    instsec = [{'name': tch['name'], 'sections': sorted(sec[1] for sec in tch['sections'])} for tch in teachers]
+    instsecstr = '\n'.join(tch['name'] + '\t' + '\t'.join(tch['sections']) for tch in instsec) + '\n'
+    diffwrite('instructor-sections', instsec, instsecstr, loader=TabLoader('name', 'sections', varlength=True))
+
+    if input('Create all-modder with full names? ').casefold() in {'y', 'yes'}:
+        with open('all-modder', 'wt') as fid:
+            for stu in studentinf:
+                fid.write(codename(stu) + '\t' + stu['name'] + '\n')
+    else:
+        print('Not making all-modder. (`cut -f -2 allnames > all-modder` has same effect)')
+
+    c = get_config()
+    c.InteractiveShellEmbed.colors = "Linux"
+    IPython.embed(config=c)
