@@ -141,7 +141,7 @@ def diffwrite(filename, data, as_string=None, loader=json.load):
                 return
             print(f"I don't understand '{answer}'!")
 
-def namelist(stuids, color='', studict, addsec=False):
+def namelist(stuids, studict, color='', addsec=False):
     """Given a list of IDs, print names [and sections if requested] in given color,
        if found in studict; otherwise just the id."""
     reset = ''
@@ -274,9 +274,9 @@ def fetch_sections(session, studentinf, sectch, studict):
         allstus = set(sec['allstudents'])
         secstus = set(sec['students'])
         if allstus != secstus:
-            msg = f'Section {sec["name"]}: not including {namelist(allstus - secstus, Fore.RED, studict, True)}'
+            msg = f'Section {sec["name"]}: not including {namelist(allstus - secstus, studict, Fore.RED, True)}'
             if secstus - allstus:
-                msg += f'also including {namelist(secstus - allstus, Fore.GREEN, studict, False)}'
+                msg += f'also including {namelist(secstus - allstus, studict, Fore.GREEN, False)}'
             print(msg)
         del sec['allstudents']
     sectiondat = json.dumps(sections, sort_keys=True, indent=1)
