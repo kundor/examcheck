@@ -292,6 +292,21 @@ def fetch_sections(session, studentinf, sectch, studict):
     diffwrite('sections.json', sections, format_sections(sections))
     return sections
 
+def isodate(jsondate):
+    if not jsondate:
+        return
+    return isoparse(jsondate).astimezone().date().isoformat()
+
+def fetch_uploads(session, uploadsID):
+    rawuploads = getassignments(session, uploadsID)
+    uploads = [{'name': up['name'],
+        'id': up['id'],
+        'date': isodate(up['lock_at'])}
+        for up in rawuploads]
+    with open('uploads.json', 'wt') as fid: 
+        json.dump(uploads, fid, indent=2)
+    return uploads
+
 if __name__ == '__main__':
     with canvas_session() as session:
         teachers, sectch = fetch_teachers(session)
@@ -299,6 +314,7 @@ if __name__ == '__main__':
         studict = {stu['id'] : stu for stu in studentinf}
         sections = fetch_sections(session, studentinf, sectch, studict)
         examsID, altsID, uploadsID = getgroups(session)
+        uploads = fetch_uploads(session, uploadsID)
 
     allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
