@@ -303,9 +303,36 @@ def fetch_uploads(session, uploadsID):
         'id': up['id'],
         'date': isodate(up['lock_at'])}
         for up in rawuploads]
-    with open('uploads.json', 'wt') as fid: 
-        json.dump(uploads, fid, indent=2)
+    diffwrite('uploads.json', uploads)
     return uploads
+
+def fetch_exams(session, groupIDs):
+    exams = []
+    for gID in groupIDs:
+        exams += getassignments(session, gID)
+    badindices = []
+    for n, exam in enumerate(exams):
+        if not exam['quiz_id']:
+            badindices.append(n)
+            continue 
+        overrides = getoverrides(session, exam['id']) 
+        unlock = isodate(exam['unlock_at'])
+        lock = isodate(exam['lock_at'])
+        duedates = {isodate(o['due_at']) for o in overrides if o['due_at']}
+        if unlock:
+            duedates.add(unlock)
+        if lock:
+            duedates.add(lock)
+        if len(duedates) == 1: 
+            exam['date'] = duedates.pop()
+        else:
+            print(f'Exam {exam["name"]}: Could not determine date.'
+                   'Unlocks at {unlock}, locks at {lock}, overrides'
+                    + ', '.join(duedates))
+    for n in sorted(badindices, reverse=True):
+        del exams[n]
+    diffwrite('exams.json', exams)
+    return exams
 
 if __name__ == '__main__':
     with canvas_session() as session:
@@ -315,6 +342,7 @@ if __name__ == '__main__':
         sections = fetch_sections(session, studentinf, sectch, studict)
         examsID, altsID, uploadsID = getgroups(session)
         uploads = fetch_uploads(session, uploadsID)
+        exams = fetch_exams(session, [examsID, altsID])
 
     allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
