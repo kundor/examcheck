@@ -142,6 +142,39 @@ def diffwrite(filename, data, as_string=None, loader=json.load):
                 return
             print(f"I don't understand '{answer}'!")
 
+def askkey(dikt, key, title):
+    """Return dikt[key], prompting user if key isn't found"""
+    if key not in dikt:
+        print(f"Key '{key}' not found. Which group is {title}?")
+        print('\n'.join(dikt.keys()))
+        key = input('? ')
+    if key not in dikt:
+        print('OK FORGET IT')
+        return
+    return dikt[key]
+
+def getgroups(session):
+    curl = canvasbase + f'courses/{courseid}/assignment_groups'
+    with session.get(curl) as response:
+        assgroups = response.json()
+    agm = {ag['name'] : ag['id'] for ag in assgroups}
+    examid = askkey(agm, 'Module Exams', 'module exams')
+    altid = askkey(agm, 'Alternate', 'alternate exams')
+    uploadid = askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads')
+    diffwrite('groups.json', assgroups)
+    return examid, altid, uploadid
+
+def getoverrides(session, assid):
+    curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
+    with session.get(curl) as response:
+        return response.json()
+
+def getassignments(session, groupid):
+    curl = canvasbase + f'courses/{courseid}/assignment_groups/{gid}'
+    with session.get(curl, params={'include[]': 'assignments'}) as response:
+        asses = response.json()['assignments']
+    keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id')
+    return [{key : a.get(key) for key in keys} for a in asses]
 
 with canvas_session() as session:
     curl = canvasbase + f'courses/{courseid}/users'
@@ -250,17 +283,8 @@ with canvas_session() as session:
     sectiondat = re.sub('"\n }', '"}', sectiondat)
     diffwrite('sections.json', sections, sectiondat)
 
-    curl = canvasbase + f'courses/{courseid}/assignments'
+    examid, altid, uploadid = getgroups(session)
 
-    session.params = {'per_page': 100, 'search_term': 'Upload'}
-    with session.get(curl) as response:
-        rj = response.json()
-    moduploads = [{k : ass[k] for k in ('due_at', 'id', 'name')} for ass in rj]
-
-    session.params = {'per_page': 100, 'search_term': 'Exam'}
-    with session.get(curl) as response:
-        rj = response.json()
-    exams = [{k : ass[k] for k in ('due_at', 'id', 'name', 'quiz_id')} for ass in rj if 'quiz_id' in ass]
 
 allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
 allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
