@@ -10,7 +10,7 @@ extradue = 'T20:30:00Z'
 
 def set_exam_due(session, assid, quizid, date, extra_time_IDs):
     curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
-    response = s.post(curl, data={
+    response = session.post(curl, data={
         'assignment_override[course_section_id]': secid,
         'assignment_override[due_at]': date + due,
         'assignment_override[lock_at]': date + due,
@@ -19,7 +19,7 @@ def set_exam_due(session, assid, quizid, date, extra_time_IDs):
     print(response.json())
     if not extra_time_IDs:
         return
-    response = s.post(curl, data={
+    response = session.post(curl, data={
         'assignment_override[student_ids][]': extra_time_IDs,
         'assignment_override[title]': '012 Extra time',
         'assignment_override[due_at]': date + extradue,
@@ -29,7 +29,7 @@ def set_exam_due(session, assid, quizid, date, extra_time_IDs):
     print(response.json())
     for sid in extra_time_IDs:
         curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/extensions'
-        r = s.post(curl, data={
+        r = session.post(curl, data={
             'quiz_extensions[][user_id]': sid,
             'quiz_extensions[][extra_time]': 25})
 
