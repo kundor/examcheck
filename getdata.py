@@ -143,11 +143,11 @@ def diffwrite(filename, data, as_string=None, loader=json.load):
             print(f"I don't understand '{answer}'!")
 
 
-with canvas_session() as s:
+with canvas_session() as session:
     curl = canvasbase + f'courses/{courseid}/users'
-    s.params = {'per_page': 100, 'include[]': 'enrollments', 'enrollment_type[]': 'teacher'}
+    session.params = {'per_page': 100, 'include[]': 'enrollments', 'enrollment_type[]': 'teacher'}
 
-    with s.get(curl) as response:
+    with session.get(curl) as response:
         rj = response.json()
     teachers = []
     for tch in rj:
@@ -194,10 +194,10 @@ with canvas_session() as s:
     # Fix: sometimes extra teachers are present
 
 
-    s.params['enrollment_type[]'] = 'student'
+    session.params['enrollment_type[]'] = 'student'
     stuen = []
     while curl:
-        with s.get(curl) as response:
+        with session.get(curl) as response:
             stuen += response.json()
             curl = response.links.get('next', {}).get('url')
     keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
@@ -223,9 +223,9 @@ with canvas_session() as s:
         return ', '.join(names)
 
     curl = canvasbase + f'courses/{courseid}/sections'
-    s.params = {'per_page': 100, 'include[]': 'students'}
+    session.params = {'per_page': 100, 'include[]': 'students'}
 
-    with s.get(curl) as response:
+    with session.get(curl) as response:
         rj = response.json()
     keys = ['id', 'name', 'sis_section_id']
     sections = [dict(allstudents=[st['id'] for st in rec['students']],
@@ -252,13 +252,13 @@ with canvas_session() as s:
 
     curl = canvasbase + f'courses/{courseid}/assignments'
 
-    s.params = {'per_page': 100, 'search_term': 'Upload'}
-    with s.get(curl) as response:
+    session.params = {'per_page': 100, 'search_term': 'Upload'}
+    with session.get(curl) as response:
         rj = response.json()
     moduploads = [{k : ass[k] for k in ('due_at', 'id', 'name')} for ass in rj]
 
-    s.params = {'per_page': 100, 'search_term': 'Exam'}
-    with s.get(curl) as response:
+    session.params = {'per_page': 100, 'search_term': 'Exam'}
+    with session.get(curl) as response:
         rj = response.json()
     exams = [{k : ass[k] for k in ('due_at', 'id', 'name', 'quiz_id')} for ass in rj if 'quiz_id' in ass]
 
