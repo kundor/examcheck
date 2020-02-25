@@ -56,14 +56,9 @@ if __name__ == '__main__':
     except ValueError:
         sys.exit('Arguments must be quiz IDs (integers)')
     if not quizids:
-        exams = load_file('exams.json', json.load)
-        today = date.today()
-        theexams = [e for e in exams if e['date'] and isoparse(e['date']).date() == today]
-        if theexams:
-           print('Using assignments ' + ', '.join(e['name'] for e in theexams))
-           quizids = [e['quiz_id'] for e in theexams]
-        else:
-           sys.exit('Must specify at least one quiz ID')
+        quizids = todays_ids('quiz_id')
+    if not quizids:
+       sys.exit('Must specify at least one quiz ID')
 
     with canvas_session() as s:
         for quizid in quizids:

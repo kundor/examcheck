@@ -41,6 +41,18 @@ def alphaonly(string):
 def codename(student):
     return alphaonly(student['sortable_name'].lower())
 
+def todays_assigns(filename):
+    """Return exam IDs of given type (id or quiz_id) for today"""
+    exams = load_file(filename, json.load)
+    today = date.today()
+    return [e for e in exams if e['date'] and isoparse(e['date']).date() == today]
+
+def todays_ids(idtype):
+    theexams = todays_assigns('exams.json')
+    if theexams:
+       print('Using assignments ' + ', '.join(e['name'] for e in theexams))
+       return [e[idtype] for e in theexams]
+
 def get_fid(filename):
     """Try to open a file in the current directory, parent directory, or this file's location."""
     dirs = ('', os.pardir, Path(__file__).parent.resolve())

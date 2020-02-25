@@ -14,9 +14,7 @@ except ValueError:
     sys.exit('Arguments must be [save directory] followed by upload assignment IDs (integers)')
 
 if not assids:
-    uploads = load_file('uploads.json', json.load)
-    today = date.today()
-    theuploads = [u for u in uploads if isoparse(u['date']).date() == today]
+    theuploads = todays_assigns('uploads.json')
     if theuploads:
        print('Using assignments ' + ', '.join(u['name'] for u in theuploads))
        assids = [u['id'] for u in theuploads]
