@@ -178,9 +178,7 @@ def getassignments(session, groupid):
 
 with canvas_session() as session:
     curl = canvasbase + f'courses/{courseid}/users'
-    session.params = {'per_page': 100, 'include[]': 'enrollments', 'enrollment_type[]': 'teacher'}
-
-    with session.get(curl) as response:
+    with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': 'teacher'}) as response:
         rj = response.json()
     teachers = []
     for tch in rj:
@@ -227,10 +225,9 @@ with canvas_session() as session:
     # Fix: sometimes extra teachers are present
 
 
-    session.params['enrollment_type[]'] = 'student'
     stuen = []
     while curl:
-        with session.get(curl) as response:
+        with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': 'student'}) as response:
             stuen += response.json()
             curl = response.links.get('next', {}).get('url')
     keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
@@ -256,9 +253,8 @@ with canvas_session() as session:
         return ', '.join(names)
 
     curl = canvasbase + f'courses/{courseid}/sections'
-    session.params = {'per_page': 100, 'include[]': 'students'}
 
-    with session.get(curl) as response:
+    with session.get(curl, params={'include[]': 'students'}) as response:
         rj = response.json()
     keys = ['id', 'name', 'sis_section_id']
     sections = [dict(allstudents=[st['id'] for st in rec['students']],
