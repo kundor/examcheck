@@ -2,6 +2,8 @@
 
 import IPython
 from canvas import *
+from datetime import date
+from dateutil.parser import isoparse
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
@@ -13,7 +15,14 @@ try:
 except ValueError:
     sys.exit('Arguments must be assignment IDs (integers)')
 if not assids:
-    sys.exit('Must specify at least one assignment ID')
+    exams = load_file('exams.json', json.load)
+    today = date.today()
+    theexams = [e for e in exams if e['date'] and isoparse(e['date']).date() == today]
+    if theexams:
+       print('Using assignments ' + ', '.join(e['name'] for e in theexams))
+       assids = [e['id'] for e in theexams]
+    else:
+       sys.exit('Must specify at least one assignment ID')
 
 curl = canvasbase + f'audit/grade_change/courses/{courseid}'
 

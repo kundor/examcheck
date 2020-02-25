@@ -2,19 +2,35 @@
 
 from canvas import *
 import shutil
+from datetime import date
+from dateutil.parser import isoparse
+
+savedir = None
 
 if len(sys.argv) > 1 and not sys.argv[-1].isdecimal():
     savedir = sys.argv.pop()
-    print('Saving to', savedir)
-else:
-    savedir = input('Directory to save in? ')
 
 try:
     assids = {int(arg) for arg in sys.argv[1:]}
 except ValueError:
-    sys.exit('Arguments must be upload assignment IDs (integers)')
+    sys.exit('Arguments must be [save directory] followed by upload assignment IDs (integers)')
+
 if not assids:
-    sys.exit('Must specify at least one upload assignment ID')
+    uploads = load_file('uploads.json', json.load)
+    today = date.today()
+    theuploads = [u for u in uploads if isoparse(u['date']).date() == today]
+    if theuploads:
+       print('Using assignments ' + ', '.join(u['name'] for u in theuploads))
+       assids = [u['id'] for u in theuploads]
+       modnum = ''.join(filter(str.isdigit, theuploads[0]['name']))
+    else:
+       sys.exit('Must specify at least one upload assignment ID')
+else:
+    modnum = assids[0]
+
+if not savedir:
+    savedir = 'mymod' + modnum
+print('Saving to', savedir)
 
 rate = 15
 minrest = 5
