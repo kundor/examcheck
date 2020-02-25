@@ -261,6 +261,16 @@ def fetch_students(session):
     diffwrite('students.json', studentinf)
     return studentinf
 
+def format_sections(sections):
+    sectiondat = json.dumps(sections, sort_keys=True, indent=1)
+    sectiondat = re.sub('\n   ', ' ', sectiondat)
+    sectiondat = re.sub('\n  \]', ']', sectiondat)
+    sectiondat = re.sub('\[ ', '[', sectiondat)
+    sectiondat = re.sub('\n  "id"', '"id"', sectiondat)
+    sectiondat = re.sub('\[\n {', '[{', sectiondat)
+    sectiondat = re.sub('"\n }', '"}', sectiondat)
+    return sectiondat
+
 def fetch_sections(session, studentinf, sectch, studict):
     curl = canvasbase + f'courses/{courseid}/sections'
     with session.get(curl, params={'include[]': 'students'}) as response:
@@ -279,14 +289,7 @@ def fetch_sections(session, studentinf, sectch, studict):
                 msg += f'also including {namelist(secstus - allstus, studict, Fore.GREEN, False)}'
             print(msg)
         del sec['allstudents']
-    sectiondat = json.dumps(sections, sort_keys=True, indent=1)
-    sectiondat = re.sub('\n   ', ' ', sectiondat)
-    sectiondat = re.sub('\n  \]', ']', sectiondat)
-    sectiondat = re.sub('\[ ', '[', sectiondat)
-    sectiondat = re.sub('\n  "id"', '"id"', sectiondat)
-    sectiondat = re.sub('\[\n {', '[{', sectiondat)
-    sectiondat = re.sub('"\n }', '"}', sectiondat)
-    diffwrite('sections.json', sections, sectiondat)
+    diffwrite('sections.json', sections, format_sections(sections))
     return sections
 
 if __name__ == '__main__':
