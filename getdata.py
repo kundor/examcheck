@@ -73,7 +73,6 @@ def wrapblocks(blocks, width, indent="    "):
         sep = ', '
     print()
 
-
 def comparelists(oldlist, newlist, primary_key=None):
     """Print a diff of lists of dicts (assumed to have the same keys).
     Values are assumed to be strings, numbers, or lists."""
@@ -141,6 +140,21 @@ def diffwrite(filename, data, as_string=None, loader=json.load):
                 print('Discarding new data')
                 return
             print(f"I don't understand '{answer}'!")
+
+def namelist(stuids, color='', studict, addsec=False):
+    reset = ''
+    if color:
+        reset = Fore.RESET
+    names = []
+    for stu in stuids:
+        try:
+            thename = color + studict[stu]['name'] + reset
+            if addsec:
+                thename += f" ({studict[stu]['section']})"
+            names += [thename]
+        except KeyError:
+            names += [color + str(stu) + reset]
+    return ', '.join(names)
 
 def askkey(dikt, key, title):
     """Return dikt[key], prompting user if key isn't found"""
@@ -239,23 +253,7 @@ with canvas_session() as session:
 
     studict = {stu['id'] : stu for stu in studentinf}
 
-    def namelist(stuids, color='', addsec=False):
-        reset = ''
-        if color:
-            reset = Fore.RESET
-        names = []
-        for stu in stuids:
-            try:
-                thename = color + studict[stu]['name'] + reset
-                if addsec:
-                    thename += f" ({studict[stu]['section']})"
-                names += [thename]
-            except KeyError:
-                names += [color + str(stu) + reset]
-        return ', '.join(names)
-
     curl = canvasbase + f'courses/{courseid}/sections'
-
     with session.get(curl, params={'include[]': 'students'}) as response:
         rj = response.json()
     keys = ['id', 'name', 'sis_section_id']
@@ -267,9 +265,9 @@ with canvas_session() as session:
         allstus = set(sec['allstudents'])
         secstus = set(sec['students'])
         if allstus != secstus:
-            msg = f'Section {sec["name"]}: not including {namelist(allstus - secstus, Fore.RED, True)}'
+            msg = f'Section {sec["name"]}: not including {namelist(allstus - secstus, Fore.RED, studict, True)}'
             if secstus - allstus:
-                msg += f'also including {namelist(secstus - allstus, Fore.GREEN, False)}'
+                msg += f'also including {namelist(secstus - allstus, Fore.GREEN, studict, False)}'
             print(msg)
         del sec['allstudents']
     sectiondat = json.dumps(sections, sort_keys=True, indent=1)
