@@ -176,12 +176,18 @@ def getassignments(session, groupid):
     keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id')
     return [{key : a.get(key) for key in keys} for a in asses]
 
-with canvas_session() as session:
+def getenrolled(session, enroll_type):
     curl = canvasbase + f'courses/{courseid}/users'
-    with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': 'teacher'}) as response:
-        rj = response.json()
+    enrolled = []
+    while curl:
+        with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': enroll_type}) as response:
+            enrolled += response.json()
+            curl = response.links.get('next', {}).get('url')
+    return enrolled
+
+with canvas_session() as session:
     teachers = []
-    for tch in rj:
+    for tch in getenrolled(session, 'teacher'):
         try:
             thesections = sorted(([ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(1))
             teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': thesections}]
@@ -225,11 +231,7 @@ with canvas_session() as session:
     # Fix: sometimes extra teachers are present
 
 
-    stuen = []
-    while curl:
-        with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': 'student'}) as response:
-            stuen += response.json()
-            curl = response.links.get('next', {}).get('url')
+    stuen = getenrolled(session, 'student')
     keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
     studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
                        **{k: stu[k] for k in keys}) for stu in stuen] 
