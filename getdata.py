@@ -186,7 +186,7 @@ def getoverrides(session, assid):
         return response.json()
 
 def getassignments(session, groupid):
-    curl = canvasbase + f'courses/{courseid}/assignment_groups/{gid}'
+    curl = canvasbase + f'courses/{courseid}/assignment_groups/{groupid}'
     with session.get(curl, params={'include[]': 'assignments'}) as response:
         asses = response.json()['assignments']
     keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id')
