@@ -298,7 +298,7 @@ if __name__ == '__main__':
         studentinf = fetch_students(session)
         studict = {stu['id'] : stu for stu in studentinf}
         sections = fetch_sections(session, studentinf, sectch, studict)
-        examid, altid, uploadid = getgroups(session)
+        examsID, altsID, uploadsID = getgroups(session)
 
     allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
