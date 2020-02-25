@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 
 import io
-import os
-import sys
 import subprocess
 from zipfile import ZipFile, BadZipFile
+from canvas import *
 from collections import namedtuple
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
