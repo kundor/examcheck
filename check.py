@@ -13,13 +13,15 @@ import IPython
 from traitlets.config import get_config
 
 if len(sys.argv) <= 2:
-    sys.exit('Arguments: <quizid(s)> <submission zip file(s)> <original Module file>')
-arg = 1
+    sys.exit('Arguments: [quizid(s)] <submission zip file(s)> <original Module file>')
 
 quizids = []
+arg = 1
 while arg < len(sys.argv) and sys.argv[arg].isnumeric():
     quizids.append(int(sys.argv[arg]))
     arg += 1
+if not quizids:
+    quizids = todays_ids('quiz_id')
 if not quizids:
     sys.exit(f'Could not find any quiz IDs. Usage: {sys.argv[0]} <quizid(s)> <submission zip file(s)> <original Module file>')
 
