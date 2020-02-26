@@ -192,11 +192,12 @@ if __name__ == '__main__':
                 continue
             oname = name
             omodr = modder
-            stat = checkmod(name, modder)
+            stat = checkmodder(name, modder)
             if stat is Status.Approved:
                 modders[name].append(modder)
             elif stat is Status.Unknown:
-                addit = input(f'User {stu["name"]}: modder {modder}. Add? ')
+                stuname = studict[name]['name']
+                addit = input(f'User {stuname}: modder {modder}. Add? ')
                 if addit.lower() in {'y', 'yes'}:
                     modders[name].append(modder)
 
