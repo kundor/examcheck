@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 
 from canvas import *
-from datetime import datetime, time, timedelta, timezone
-
-mytime = time(12) # section 012 at noon
+from datetime import datetime, timedelta, timezone
 
 # extra_time_IDs = [ 308978 ]
 
@@ -14,13 +12,13 @@ def combine(date, time_of_day, delta=timedelta(0)):
     iso = dt.astimezone(timezone.utc).isoformat()
     return iso.replace('+00:00', 'Z')
 
-def set_exam_due(session, assid, quizid, date, extra_time_IDs):
+def set_exam_due(session, assid, quizid, date, extra_time_IDs, sectime=sectime):
     curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
     duedelta = timedelta(hours=1)
     extradelta = timedelta(hours=1.5)
-    begin = combine(date, mytime)
-    end = combine(date, mytime, duedelta)
-    extraend = combine(date, mytime, extradelta)
+    begin = combine(date, sectime)
+    end = combine(date, sectime, duedelta)
+    extraend = combine(date, sectime, extradelta)
     response = session.post(curl, data={
         'assignment_override[course_section_id]': secid,
         'assignment_override[due_at]': end,

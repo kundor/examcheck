@@ -7,7 +7,7 @@ import keyring
 import warnings
 import requests
 from pathlib import Path
-from datetime import date
+from datetime import date, time
 from dateutil.parser import isoparse
 
 cuser = os.getenv('CANVASUSER')
@@ -18,6 +18,7 @@ else:
 
 courseid = 57435
 secid = 37411 # 012
+sectime = time(12) # section 012 at noon
 canvasbase = 'https://canvas.colorado.edu/api/v1/'
 
 def canvas_session():
