@@ -188,38 +188,10 @@ def askkey(dikt, key, title):
         return
     return dikt[key]
 
-def fetch_groups(session):
-    curl = canvasbase + f'courses/{courseid}/assignment_groups'
-    with session.get(curl) as response:
-        assgroups = response.json()
-    agm = {ag['name'] : ag['id'] for ag in assgroups}
-    examid = askkey(agm, 'Module Exams', 'module exams')
-    altid = askkey(agm, 'Alternate', 'alternate exams')
-    uploadid = askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads')
-    finalid = askkey(agm, 'Final Exam', 'the final exam')
-    diffwrite('groups.json', assgroups)
-    return examid, altid, uploadid, finalid
-
-def getoverrides(session, assid):
-    curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
-    with session.get(curl) as response:
-        return response.json()
-
-def getassignments(session, groupid):
-    curl = canvasbase + f'courses/{courseid}/assignment_groups/{groupid}'
-    with session.get(curl, params={'include[]': 'assignments'}) as response:
-        asses = response.json()['assignments']
-    keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id')
-    return [{key : a.get(key) for key in keys} for a in asses]
-
-def getenrolled(session, enroll_type):
-    curl = canvasbase + f'courses/{courseid}/users'
-    enrolled = []
-    while curl:
-        with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': enroll_type}) as response:
-            enrolled += response.json()
-            curl = response.links.get('next', {}).get('url')
-    return enrolled
+def isodate(jsondate):
+    if not jsondate:
+        return
+    return isoparse(jsondate).astimezone().date().isoformat()
 
 def restrict_boo(teachers):
     """Remove Boo from all sections unless she's the only teacher"""
@@ -254,9 +226,40 @@ def confirm_sections(sectch, teachers):
         oldteacher['sections'].remove(thesection)
         newteacher['sections'].append(thesection)
 
+def format_sections(sections):
+    sectiondat = json.dumps(sections, sort_keys=True, indent=1)
+    sectiondat = re.sub('\n   ', ' ', sectiondat)
+    sectiondat = re.sub('\n  \]', ']', sectiondat)
+    sectiondat = re.sub('\[ ', '[', sectiondat)
+    sectiondat = re.sub('\n  "id"', '"id"', sectiondat)
+    sectiondat = re.sub('\[\n {', '[{', sectiondat)
+    sectiondat = re.sub('"\n }', '"}', sectiondat)
+    return sectiondat
+
+def get_enrolled(session, enroll_type):
+    curl = canvasbase + f'courses/{courseid}/users'
+    enrolled = []
+    while curl:
+        with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': enroll_type}) as response:
+            enrolled += response.json()
+            curl = response.links.get('next', {}).get('url')
+    return enrolled
+
+def get_assignments(session, groupid):
+    curl = canvasbase + f'courses/{courseid}/assignment_groups/{groupid}'
+    with session.get(curl, params={'include[]': 'assignments'}) as response:
+        asses = response.json()['assignments']
+    keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id')
+    return [{key : a.get(key) for key in keys} for a in asses]
+
+def get_overrides(session, assid):
+    curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
+    with session.get(curl) as response:
+        return response.json()
+
 def fetch_teachers(session):
     teachers = []
-    for tch in getenrolled(session, 'teacher'):
+    for tch in get_enrolled(session, 'teacher'):
         try:
             thesections = sorted(([ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(1))
             teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': thesections}]
@@ -274,22 +277,12 @@ def fetch_teachers(session):
     return teachers, sectch
 
 def fetch_students(session):
-    stuen = getenrolled(session, 'student')
+    stuen = get_enrolled(session, 'student')
     keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
     studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
                        **{k: stu[k] for k in keys}) for stu in stuen]
     diffwrite('students.json', studentinf)
     return studentinf
-
-def format_sections(sections):
-    sectiondat = json.dumps(sections, sort_keys=True, indent=1)
-    sectiondat = re.sub('\n   ', ' ', sectiondat)
-    sectiondat = re.sub('\n  \]', ']', sectiondat)
-    sectiondat = re.sub('\[ ', '[', sectiondat)
-    sectiondat = re.sub('\n  "id"', '"id"', sectiondat)
-    sectiondat = re.sub('\[\n {', '[{', sectiondat)
-    sectiondat = re.sub('"\n }', '"}', sectiondat)
-    return sectiondat
 
 def fetch_sections(session, studentinf, sectch, studict):
     curl = canvasbase + f'courses/{courseid}/sections'
@@ -312,13 +305,20 @@ def fetch_sections(session, studentinf, sectch, studict):
     diffwrite('sections.json', sections, format_sections(sections))
     return sections
 
-def isodate(jsondate):
-    if not jsondate:
-        return
-    return isoparse(jsondate).astimezone().date().isoformat()
+def fetch_groups(session):
+    curl = canvasbase + f'courses/{courseid}/assignment_groups'
+    with session.get(curl) as response:
+        assgroups = response.json()
+    agm = {ag['name'] : ag['id'] for ag in assgroups}
+    examid = askkey(agm, 'Module Exams', 'module exams')
+    altid = askkey(agm, 'Alternate', 'alternate exams')
+    uploadid = askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads')
+    finalid = askkey(agm, 'Final Exam', 'the final exam')
+    diffwrite('groups.json', assgroups)
+    return examid, altid, uploadid, finalid
 
 def fetch_uploads(session, uploadsID):
-    rawuploads = getassignments(session, uploadsID)
+    rawuploads = get_assignments(session, uploadsID)
     uploads = [{'name': up['name'],
         'id': up['id'],
         'date': isodate(up['lock_at'])}
@@ -329,13 +329,13 @@ def fetch_uploads(session, uploadsID):
 def fetch_exams(session, groupIDs):
     exams = []
     for gID in groupIDs:
-        exams += getassignments(session, gID)
+        exams += get_assignments(session, gID)
     badindices = []
     for n, exam in enumerate(exams):
         if not exam['quiz_id']:
             badindices.append(n)
             continue 
-        overrides = getoverrides(session, exam['id']) 
+        overrides = get_overrides(session, exam['id']) 
         unlock = isodate(exam['unlock_at'])
         lock = isodate(exam['lock_at'])
         duedates = {isodate(o['due_at']) for o in overrides if o['due_at']}
