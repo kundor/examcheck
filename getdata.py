@@ -326,9 +326,10 @@ def fetch_exams(session, groupIDs):
         if len(duedates) == 1: 
             exam['date'] = duedates.pop()
         else:
-            print(f'Exam {exam["name"]}: Could not determine date.'
-                   'Unlocks at {unlock}, locks at {lock}, overrides'
+            print(f'Exam {exam["name"]}: Could not determine date. '
+                  f'Unlocks at {unlock}, locks at {lock}, overrides '
                     + ', '.join(duedates))
+            exam['date'] = None
     for n in sorted(badindices, reverse=True):
         del exams[n]
     diffwrite('exams.json', exams)
