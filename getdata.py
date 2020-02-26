@@ -36,12 +36,12 @@ class TabLoader:
 def colordiff(old, new, width):
     """Return highlighted versions of strings old and new, wrapped to width"""
     cd = icdiff.ConsoleDiff(wrapcolumn=width, cols=2*width+10)
-    lines = cd.make_table([old, new])
+    lines = cd.make_table([old], [new])
     hlold = []
     hlnew = []
     for line in lines:
         oldend = line.find(' '*5)
-        hlold += [line[:end]]
+        hlold += [line[:oldend]]
         newbeg = line.rstrip().rfind(' '*5) + 5
         hlnew += [line[newbeg:]]
     return '\n'.join(hlold), '\n'.join(hlnew)
@@ -52,17 +52,22 @@ def wrapdict(label, rec, keys, width, maxkeylen):
     blocks += [f'{key}: {rec[key]}' for key in keys]
     wrapblocks(blocks, width)
 
-def wrapchanged(label, old, new, keys, width, maxkeylen):
-    blocks = [f'{label:<{maxkeylen+2}}']
+def wrapchanged(label, old, new, keys, width):
+    oldstr = ''
+    newstr = ''
     for key in keys:
         if old[key] != new[key]:
             if isinstance(old[key], list):
                 if sorted(old[key]) == sorted(new[key]):
                     continue
-            blocks.append(f'{key}: {old[key]} -> {new[key]}')
-    if len(blocks) == 1:
+            oldstr += f'{old[key]}, '
+            newstr += f'{new[key]}, '
+    if not oldstr:
         return False # no real changes, just ordering
-    wrapblocks(blocks, width)
+    oldstr, newstr = colordiff(oldstr, newstr, width)
+    print(label)
+    print(oldstr)
+    print(newstr)
     return True
 
 def wrapblocks(blocks, width, indent="    "):
@@ -118,7 +123,7 @@ def comparelists(oldlist, newlist, primary_key=None):
     print(Fore.YELLOW + 'Changes:' + Fore.RESET)
     for key in old.keys() & new.keys():
         if old[key] != new[key]:
-            if wrapchanged(key, old[key], new[key], thekeys - {primary_key}, width, maxkeylen):
+            if wrapchanged(key, old[key], new[key], thekeys - {primary_key}, width):
                 realdiff = True
     return realdiff
 
