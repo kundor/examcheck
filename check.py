@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
 import io
+import mmap
 import subprocess
 from zipfile import ZipFile, BadZipFile
 from canvas import *
 from collections import namedtuple
+from hashlib import blake2b
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
 from allgrades import allgrades
@@ -34,6 +36,8 @@ else:
 origfile = sys.argv[-1]
 
 print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
+
+SHEETSEP = '----------'
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
@@ -71,26 +75,34 @@ for subfile in subfiles:
         for filename in sorted(subs.namelist()):
             if filename.endswith('.xlsx'):
                 fdata = io.BytesIO(subs.read(filename))
+                buf = fdata.getbuffer()
             elif filename.endswith('.xls'):
                 print(f'Converting {filename} to xlsx', file=sys.stderr)
                 subs.extract(filename)
                 subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename])
                 fdata = open(filename + 'x', 'rb')
+                buf = mmap.mmap(fdata.fileno(), 0, access=mmap.ACCESS_READ)
             else:
                 print('Not a xlsx file: ' + filename, file=sys.stderr)
                 continue
             codename = filename[:filename.find('_')]
+            bsum = blake2b(buf, digest_size=24)
+            xlhash = bsum.hexdigest()
+            del buf
             try:
                 wb = load_workbook(fdata, read_only=True)
             except BadZipFile as e:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
+            bsum = blake2b(digest_size=24)
             infos.append(getinfo(wb))
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
                     for row in ws.rows:
-                        print(','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(','), file=csv)
+                        rowstr = ','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(',')
+                        print(rowstr, file=csv)
+                        bsum.update((rowstr + '\n').encode())
                         for c in row:
                             if c.value is not None:
                                 cval = cleanval(c.value)
@@ -99,7 +111,9 @@ for subfile in subfiles:
                                         cellfiles[cval] = [filename]
                                     else:
                                         cellfiles[cval].append(filename)
-                    print('----------', file=csv)
+                    print(SHEETSEP, file=csv)
+                    bsum.update((SHEETSEP + '\n').encode())
+            csvhash = bsum.hexdigest()
             wb.close()
             fdata.close()
 
