@@ -24,14 +24,22 @@ def semester_break(oldstamp, newstamp):
     return old < sembnd
 
 def ask_wipe():
-    jsons = ['students.json', 'sections.json', 'teachers.json', 'groups.json', 'exams.json', 'uploads.json']
+    info_files = ['students.json',
+            'sections.json',
+            'teachers.json',
+            'groups.json',
+            'exams.json',
+            'uploads.json',
+            'allnames',
+            'all-modder',
+            'instructor-sections']
     now = time.time()
-    newest = max(os.path.getmtime(json) for json in jsons)
+    newest = max(os.path.getmtime(info) for info in info_files)
     if too_old(newest, now) or semester_break(newest, now):
         ans = input('It might be a new semester. Wipe data and start fresh? ')
         if ans.lower() in {'y', 'yes'}:
-            for json in jsons:
-                os.remove(json)
+            for info in info_files:
+                os.remove(info)
         else:
             print('Not removing old data.')
 
