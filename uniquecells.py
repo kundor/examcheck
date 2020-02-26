@@ -4,6 +4,8 @@ import sys
 import glob
 import re
 from openpyxl import load_workbook
+import IPython
+from traitlets.config import get_config
 
 refpat = re.compile(r"\$?[A-Z]{1,3}\$?[0-9]{1,5}")
 colpat = re.compile(r"(\$?[A-Z]{1,3}):\1")
@@ -86,3 +88,7 @@ if __name__ == '__main__':
                 if tuple(fs) == ff:
                     print(c, end=', ')
             print()
+
+    c = get_config()
+    c.InteractiveShellEmbed.colors = "Linux"
+    IPython.embed(config=c)
