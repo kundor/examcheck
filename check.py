@@ -90,7 +90,7 @@ for subfile in subfiles:
             codename = filename[:filename.find('_')]
             bsum = blake2b(buf, digest_size=24)
             xlhash = bsum.hexdigest()
-            del buf
+            del buf, bsum
             try:
                 wb = load_workbook(fdata, read_only=True)
             except BadZipFile as e:
