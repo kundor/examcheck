@@ -177,8 +177,9 @@ def fetch_groups(session):
     examid = askkey(agm, 'Module Exams', 'module exams')
     altid = askkey(agm, 'Alternate', 'alternate exams')
     uploadid = askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads')
+    finalid = askkey(agm, 'Final Exam', 'the final exam')
     diffwrite('groups.json', assgroups)
-    return examid, altid, uploadid
+    return examid, altid, uploadid, finalid
 
 def getoverrides(session, assid):
     curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
@@ -341,9 +342,9 @@ if __name__ == '__main__':
         studentinf = fetch_students(session)
         studict = {stu['id'] : stu for stu in studentinf}
         sections = fetch_sections(session, studentinf, sectch, studict)
-        examsID, altsID, uploadsID = fetch_groups(session)
+        examsID, altsID, uploadsID, finalid = fetch_groups(session)
         uploads = fetch_uploads(session, uploadsID)
-        exams = fetch_exams(session, [examsID, altsID])
+        exams = fetch_exams(session, [examsID, altsID, finalid])
 
     allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
