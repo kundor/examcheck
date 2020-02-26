@@ -12,6 +12,29 @@ import icdiff
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
+def too_old(oldstamp, newstamp):
+    return newstamp - oldstamp > 4*30*24*60*60 # 4 months
+
+def semester_break(oldstamp, newstamp):
+    theyear = time.gmtime()[0]
+    sembounds = [date(theyear, 1, 1), date(theyear, 5, 5)] # January 1, May 5
+    old = date.fromtimestamp(oldstamp)
+    new = date.fromtimestamp(newstamp)
+    sembnd = max(bnd for bnd in sembounds if bnd < new)
+    return old < sembnd
+
+def ask_wipe():
+    jsons = ['students.json', 'sections.json', 'teachers.json', 'groups.json', 'exams.json', 'uploads.json']
+    now = time.time()
+    newest = max(os.path.getmtime(json) for json in jsons)
+    if too_old(newest, now) or semester_break(newest, now):
+        ans = input('It might be a new semester. Wipe data and start fresh? ')
+        if ans.lower() in {'y', 'yes'}:
+            for json in jsons:
+                os.remove(json)
+        else:
+            print('Not removing old data.')
+
 def backupname(filename):
     """Change filename.ext to filename1.ext, incrementing until it doesn't exist"""
     base, ext = os.path.splitext(filename)
@@ -356,6 +379,7 @@ def fetch_exams(session, groupIDs):
     return exams
 
 if __name__ == '__main__':
+    ask_wipe()
     with canvas_session() as session:
         teachers, sectch = fetch_teachers(session)
         studentinf = fetch_students(session)
