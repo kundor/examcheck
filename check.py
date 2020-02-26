@@ -52,14 +52,16 @@ SHEETSEP = '----------'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
-Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder'))
+Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder', 'xlhash', 'csvhash'), defaults=(None, None))
 
-def getinfo(workbook):
+def getinfo(workbook, xlhash=None, csvhash=None):
     return Info(filename,
                 workbook.properties.created,
                 workbook.properties.creator,
                 workbook.properties.modified,
-                workbook.properties.last_modified_by or '')
+                workbook.properties.last_modified_by or '',
+                xlhash,
+                csvhash)
 
 origwb = load_workbook(origfile, read_only=True)
 origcells = thecells(origwb)
@@ -95,7 +97,6 @@ for subfile in subfiles:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
             bsum = blake2b(digest_size=24)
-            infos.append(getinfo(wb))
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
@@ -114,6 +115,7 @@ for subfile in subfiles:
                     print(SHEETSEP, file=csv)
                     bsum.update((SHEETSEP + '\n').encode())
             csvhash = bsum.hexdigest()
+            infos.append(getinfo(wb, xlhash, csvhash))
             wb.close()
             fdata.close()
 
