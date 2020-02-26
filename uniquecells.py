@@ -58,13 +58,24 @@ if __name__ == '__main__':
             if len(fs) == n:
                 rpts[n][tuple(fs)] += 1
 
-# then, looking at big = max(rpts2.values),
-# then big = max(v for v in rpts2.values() if v < big), etc.
-# suspsets = [ff for ff in rpts2 if rpts2[ff] == big]
-# for susp in suspsets:
-#    susp = list(susp)
-#    thecels = [c for c in cellfiles if cellfiles[c] == susp]; [c for c in thecels if not numpat.fullmatch(c)]
+    for n in range(2, 12):
+        big = max(rpts[n].values())
+        msg = []
+        while big > 6:
+            suspsets = [ff for ff in rpts[n] if rpts[n][ff] == big]
+            for susp in suspsets:
+                susp = list(susp)
+                thecels = [c for c in cellfiles if cellfiles[c] == susp]
+                msg.append([c for c in thecels if not numpat.fullmatch(c)])
+            if any(msg):
+                print(f'Matches: {big}')
+            for susp, cc in zip(suspsets, msg):
+                if not cc:
+                    continue
+                print(susp)
+                print(cc)
 # # Check it out; are they suspicious or what? Numbers usually turn out not to be
+            big = max(v for v in rpts[n].values() if v < big)
 
 # Also consider:
 
