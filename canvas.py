@@ -50,7 +50,7 @@ def todays_assigns(filename):
 def todays_ids(idtype):
     theexams = todays_assigns('exams.json')
     if theexams:
-       print('Using assignments ' + ', '.join(e['name'] for e in theexams))
+       print('Using assignments ' + ', '.join(e['name'] for e in theexams), file=sys.stderr)
        return [e[idtype] for e in theexams]
 
 def get_fid(filename):
