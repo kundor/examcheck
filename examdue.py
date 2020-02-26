@@ -1,20 +1,31 @@
 #!/usr/bin/python3
 
 from canvas import *
+from datetime import datetime, time, timedelta, timezone
 
-unlock = 'T19:00:00Z'
-due = 'T20:00:00Z'
-extradue = 'T20:30:00Z'
+mytime = time(12) # section 012 at noon
 
 # extra_time_IDs = [ 308978 ]
 
+def combine(date, time_of_day, delta=timedelta(0)):
+    if isinstance(date, str):
+        date = isoparse(date)
+    dt = datetime.combine(date, time_of_day) + delta
+    iso = dt.astimezone(timezone.utc).isoformat()
+    return iso.replace('+00:00', 'Z')
+
 def set_exam_due(session, assid, quizid, date, extra_time_IDs):
     curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
+    duedelta = timedelta(hours=1)
+    extradelta = timedelta(hours=1.5)
+    begin = combine(date, mytime)
+    end = combine(date, mytime, duedelta)
+    extraend = combine(date, mytime, extradelta)
     response = session.post(curl, data={
         'assignment_override[course_section_id]': secid,
-        'assignment_override[due_at]': date + due,
-        'assignment_override[lock_at]': date + due,
-        'assignment_override[unlock_at]': date + unlock})
+        'assignment_override[due_at]': end,
+        'assignment_override[lock_at]': end,
+        'assignment_override[unlock_at]': begin})
     print(response)
     print(response.json())
     if not extra_time_IDs:
@@ -22,9 +33,9 @@ def set_exam_due(session, assid, quizid, date, extra_time_IDs):
     response = session.post(curl, data={
         'assignment_override[student_ids][]': extra_time_IDs,
         'assignment_override[title]': '012 Extra time',
-        'assignment_override[due_at]': date + extradue,
-        'assignment_override[lock_at]': date + extradue,
-        'assignment_override[unlock_at]': date + unlock})
+        'assignment_override[due_at]': extraend,
+        'assignment_override[lock_at]': extraend,
+        'assignment_override[unlock_at]': begin})
     print(response)
     print(response.json())
     for sid in extra_time_IDs:

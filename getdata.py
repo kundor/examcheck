@@ -169,7 +169,7 @@ def askkey(dikt, key, title):
         return
     return dikt[key]
 
-def getgroups(session):
+def fetch_groups(session):
     curl = canvasbase + f'courses/{courseid}/assignment_groups'
     with session.get(curl) as response:
         assgroups = response.json()
@@ -341,7 +341,7 @@ if __name__ == '__main__':
         studentinf = fetch_students(session)
         studict = {stu['id'] : stu for stu in studentinf}
         sections = fetch_sections(session, studentinf, sectch, studict)
-        examsID, altsID, uploadsID = getgroups(session)
+        examsID, altsID, uploadsID = fetch_groups(session)
         uploads = fetch_uploads(session, uploadsID)
         exams = fetch_exams(session, [examsID, altsID])
 
