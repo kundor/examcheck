@@ -115,6 +115,8 @@ for info in infos:
         addit = input(f"User {stu['name']}: modder '{info.modder}'. Add? ")
         if addit.lower() in {'y', 'yes'}:
             modders[codename].append(info.modder)
+    # if multiple files, and some are identical, remove the later ones;
+    # if (still multiple and) some are unmodified, remove those
 
 
 
