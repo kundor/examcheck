@@ -8,6 +8,7 @@ from textwrap import TextWrapper
 from shutil import get_terminal_size
 from operator import itemgetter
 from traitlets.config import get_config
+import icdiff
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
@@ -31,6 +32,19 @@ class TabLoader:
                 fields = fields[:len(self.keys)-1] + [fields[len(self.keys)-1:]]
             data.append(dict(zip(self.keys, fields)))
         return data
+
+def colordiff(old, new, width):
+    """Return highlighted versions of strings old and new, wrapped to width"""
+    cd = icdiff.ConsoleDiff(wrapcolumn=width, cols=2*width+10)
+    lines = cd.make_table([old, new])
+    hlold = []
+    hlnew = []
+    for line in lines:
+        oldend = line.find(' '*5)
+        hlold += [line[:end]]
+        newbeg = line.rstrip().rfind(' '*5) + 5
+        hlnew += [line[newbeg:]]
+    return '\n'.join(hlold), '\n'.join(hlnew)
 
 def wrapdict(label, rec, keys, width, maxkeylen):
     """Print key: value blocks, wrapping preferentially between keys"""
