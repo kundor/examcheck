@@ -8,6 +8,7 @@ from openpyxl import load_workbook
 refpat = re.compile(r"\$?[A-Z]{1,3}\$?[0-9]{1,5}")
 colpat = re.compile(r"(\$?[A-Z]{1,3}):\1")
 rowpat = re.compile(r"(\$?[0-9]{1,5}):\1")
+numpat = re.compile(r'-?[0-9]+\.?[0-9]+')
 
 def cleanval(cellval):
     cval = str(cellval)
@@ -31,7 +32,6 @@ def thecells(filename):
     if wb is not filename:
         wb.close()
     return contents
-
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 # suspsets = [ff for ff in rpts2 if rpts2[ff] == big]
 # for susp in suspsets:
 #    susp = list(susp)
-#    thecels = [c for c in cellfiles if cellfiles[c] == susp]
+#    thecels = [c for c in cellfiles if cellfiles[c] == susp]; [c for c in thecels if not numpat.fullmatch(c)]
 # # Check it out; are they suspicious or what? Numbers usually turn out not to be
 
 # Also consider:
