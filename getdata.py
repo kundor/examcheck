@@ -64,9 +64,15 @@ class TabLoader:
             data.append(dict(zip(self.keys, fields)))
         return data
 
+def prepend(pre, lines):
+    return pre + f'\n{pre}'.join(lines)
+
+def maxlen(*args):
+    return max(len(str(arg)) for arg in args)
+
 def colordiff(old, new, width):
     """Return highlighted versions of strings old and new, wrapped to width"""
-    cd = icdiff.ConsoleDiff(wrapcolumn=width, cols=2*width+10)
+    cd = icdiff.ConsoleDiff(wrapcolumn=width-2, cols=2*width+10)
     lines = cd.make_table([old], [new])
     hlold = []
     hlnew = []
@@ -75,7 +81,7 @@ def colordiff(old, new, width):
         hlold += [line[:oldend]]
         newbeg = line.rstrip().rfind(' '*5) + 5
         hlnew += [line[newbeg:]]
-    return '\n'.join(hlold), '\n'.join(hlnew)
+    return prepend('- ', hlold), prepend('+ ', hlnew)
 
 def wrapdict(label, rec, keys, width, maxkeylen):
     """Print key: value blocks, wrapping preferentially between keys"""
@@ -86,16 +92,20 @@ def wrapdict(label, rec, keys, width, maxkeylen):
 def wrapchanged(label, old, new, keys, width):
     oldstr = ''
     newstr = ''
+    diff = False
     for key in keys:
-        if old[key] != new[key]:
+        if old[key] != new[key] or key == 'name':
             if isinstance(old[key], list):
                 if sorted(old[key]) == sorted(new[key]):
                     continue
-            oldstr += f'{old[key]}, '
-            newstr += f'{new[key]}, '
-    if not oldstr:
+            ml = maxlen(old[key], new[key])
+            oldstr += f'{old[key]:{ml}}  '
+            newstr += f'{new[key]:{ml}}  '
+            if old[key] != new[key]:
+                diff = True
+    if not diff:
         return False # no real changes, just ordering
-    oldstr, newstr = colordiff(oldstr, newstr, width)
+    oldstr, newstr = colordiff(oldstr[:-2], newstr[:-2], width)
     print(label)
     print(oldstr)
     print(newstr)
