@@ -21,9 +21,9 @@ with open(outfile, 'w', newline='') as fid:
     writer = csv.writer(fid, 'newline')
     for ws in wb.worksheets:
         ws.reset_dimensions()
-        maxrow = max(n for n,r in enumerate(ws.rows) if any(c.value for c in r))
-        for row in ws.iter_rows(max_row=maxrow+1):
-            maxcol = max((n for n,c in enumerate(row) if c.value is not None), default=-1)
-            writer.writerow(c.value for c in row[:maxcol+1])
+        maxrow = max(n for n,row in enumerate(ws.values) if any(row))
+        for row in ws.iter_rows(max_row=maxrow+1, values_only=True):
+            maxcol = max((n for n,c in enumerate(row) if c is not None), default=-1)
+            writer.writerow(row[:maxcol+1])
         fid.write('----------\n')
 
