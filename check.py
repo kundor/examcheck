@@ -12,45 +12,12 @@ import IPython
 from openpyxl import load_workbook
 
 from canvas import *
-from uniquecells import thecells, cleanval
+from uniquecells import cleanval
 from allgrades import fetch_grades
 from modderupdate import checkmodder, Status, modders, studict
 
-if len(sys.argv) <= 2:
-    sys.exit('Arguments: [quizid(s)] <submission zip file(s)> <original Module file>')
-
-quizids = []
-arg = 1
-while arg < len(sys.argv) and sys.argv[arg].isnumeric():
-    quizids.append(int(sys.argv[arg]))
-    arg += 1
-if not quizids:
-    quizids = todays_ids('quiz_id')
-if not quizids:
-    sys.exit(f'Could not find any quiz IDs. Usage: {sys.argv[0]} <quizid(s)> <submission zip file(s)> <original Module file>')
-
-subfiles = []
-if arg < len(sys.argv) - 1:
-    subfiles = sys.argv[arg:-1]
-else:
-    subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
-
-origfile = sys.argv[-1]
-
-print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
-
+USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
 SHEETSEP = '----------'
-
-# TODO: download the submissions here
-# Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
-# However, it only gives an HTML page with authentication error :(
-# https://community.canvaslms.com/thread/10824
-
-# Future plan: make working directory /tmp/examcheck; remove any files
-# download each submission as it comes in, a la secdownload
-# process the file in memory. instead of writing csv, feed cells as tokens to simhash and save the simhash, xlhash, csvhash
-# if there's any problem to report, write out the .xlsx and .csv files. I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
-# also re-download uniquecell cluster members.
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
@@ -62,6 +29,27 @@ Info = namedtuple('Info', ('filename',
             'xlhash',
             'csvhash',
             'simhash'), defaults=(None, None, None))
+
+def get_args(argv=sys.argv):
+    if len(argv) <= 2:
+        sys.exit(USAGE)
+    quizids = []
+    arg = 1
+    while arg < len(argv) and argv[arg].isnumeric():
+        quizids.append(int(argv[arg]))
+        arg += 1
+    if not quizids:
+        quizids = todays_ids('quiz_id')
+    if not quizids:
+        sys.exit('Could not find any quiz IDs. ' + USAGE)
+    subfiles = []
+    if arg < len(argv) - 1:
+        subfiles = argv[arg:-1]
+    else:
+        subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
+    origfile = argv[-1]
+    print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
+    return quizids, subfiles, origfile
 
 def getinfo(filename, workbook, xlhash=None, csvhash=None, simhash=None):
     return Info(filename,
@@ -92,12 +80,12 @@ def sumprint(line, bsum, out):
         print(line, file=out)
     bsum.update((line + '\n').encode())
 
-def process_cells(workbook, cellfiles, csvout=None):
+def process_cells(workbook, csvout=None):
     """Visit all cells of the workbook, printing to csvout if given,
     and return the set of (ref-erased) cells and blake and sim hashes."""
     bsum = blake2b(digest_size=24)
     shingles = []
-    mycells = {}
+    mycells = set()
     for ws in workbook.worksheets:
         ws.reset_dimensions()
         for row in ws.values:
@@ -112,12 +100,30 @@ def process_cells(workbook, cellfiles, csvout=None):
         sumprint(SHEETSEP, bsum, csvout)
     return mycells, bsum.hexdigest(), gethash(shingles)
 
-with open(origfile, 'rb') as origfid:
-    xlhash = bsum_fid(origfid)
-    origwb = load_workbook(origfid, read_only=True)
-    origcells = thecells(origwb)
-    originfo = getinfo(origfile, origwb, xlhash)
-    origwb.close()
+def get_file_info(filename):
+    with open(filename, 'rb') as fid:
+        xlhash = bsum_fid(fid)
+        wb = load_workbook(fid, read_only=True)
+        cells, csvhash, thesimhash = process_cells(wb)
+        theinfo = getinfo(filename, wb, xlhash, csvhash, thesimhash)
+        wb.close()
+    return theinfo
+
+# TODO: download the submissions here
+# Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
+# However, it only gives an HTML page with authentication error :(
+# https://community.canvaslms.com/thread/10824
+
+# Future plan: make working directory /tmp/examcheck; remove any files
+# download each submission as it comes in, a la secdownload
+# process the file in memory. instead of writing csv, save the simhash, xlhash, csvhash
+# if there's any problem to report, write out the .xlsx and .csv files.
+# I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
+# also re-download uniquecell cluster members.
+
+quizids, subfiles, origfile = get_args()
+
+origcells, originfo = get_file_info(origfile)
 
 cellfiles = defaultdict(list) # map cell_content : files
 infos = []
@@ -169,7 +175,7 @@ for subfile in subfiles:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
             with open(f'{codename}_{stuid}.csv', 'wt') as csv:
-                thecells, csvhash, thehash = process_cells(wb, cellfiles, csv)
+                thecells, csvhash, thehash = process_cells(wb, csv)
             for cval in thecells - origcells:
                 cellfiles[cval].append(filename)
             csvhashes[csvhash] += 1
@@ -178,7 +184,7 @@ for subfile in subfiles:
             fdata.close()
 
 for info in infos:
-    # Update all modder names afterward, so the long conversion process isn't held up by prompts
+    # Update modder names afterward, so the long conversion process isn't held up by prompts
     codename, stuid, subid, *fn = info.filename.split('_')
     stuid = int(stuid)
     stat = checkmodder(stuid, info.modder)
@@ -192,7 +198,6 @@ for info in infos:
             modders[codename].append(info.modder)
     # if multiple files, and some are identical, remove the later ones;
     # if (still multiple and) some are unmodified, remove those
-
 
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
