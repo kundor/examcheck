@@ -13,7 +13,7 @@ from openpyxl import load_workbook
 
 from canvas import *
 from uniquecells import thecells, cleanval
-from allgrades import allgrades
+from allgrades import fetch_grades
 from modderupdate import checkmodder, Status, modders, studict
 
 if len(sys.argv) <= 2:
@@ -96,7 +96,7 @@ with open(origfile, 'rb') as origfid:
 
 cellfiles = defaultdict(list)
 infos = []
-grades = allgrades(quizids)
+grades = fetch_grades(quizids)
 stuids = Counter()
 xlhashes = Counter()
 csvhashes = Counter()

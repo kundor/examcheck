@@ -3,9 +3,8 @@
 from canvas import *
 
 studict = {stu['id'] : stu['name'] for stu in students}
-scores = {}
 
-def streamgrades(session, quizid):
+def stream_grades(session, quizid, seenscores={}):
     curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
     while curl:
         with session.get(curl) as response:
@@ -29,26 +28,49 @@ def streamgrades(session, quizid):
                 continue
             if not thescore.is_integer():
                 print(f'Not integer score {thescore} for {sid}', file=sys.stderr)
-            if sid in scores:
-                if scores[sid] == thescore:
+            if sid in seenscores:
+                if seenscores[sid] == thescore:
                     print(f'Same score {thescore} seen again for {stuname}', file=sys.stderr)
                     continue
-                print(f'Different score {thescore} seen for {stuname}, previously {scores[sid]}', file=sys.stderr)
-                if thescore < scores[sid]:
+                print(f'Different score {thescore} seen for {stuname}, previously {seenscores[sid]}', file=sys.stderr)
+                if thescore < seenscores[sid]:
                     continue # keep max score in dictionary and output
-            yield stuname, round(thescore)
-            scores[sid] = thescore
+            yield sid, round(thescore)
+            seenscores[sid] = thescore
 
-def printgrades(session, quizid):
-    for stuname, score in streamgrades(session, quizid):
-            print(f"{stuname}\t{score}")
+def print_grades(session, quizid):
+    for sid, score in streamgrades(session, quizid):
+        stuname = studict[sid]
+        print(f"{stuname}\t{score}")
 
-def allgrades(quizids):
+def all_grades(quizids):
+    scores = {}
     with canvas_session() as session:
         for quizid in quizids:
-            for _ in streamgrades(session, quizid):
-                pass
+            scores.update(streamgrades(session, quizid))
     return scores
+
+def grades_found(localfile):
+    if not os.path.exists(localfile):
+        return False
+    numstud = len(students)
+    with open(localfile, 'rt') as fid:
+        numrec = sum(1 for line in fid)
+    return numrec > 0.8 * numstud # Less than 80% of student is assumed to be incomplete
+
+def load_grades(localfile):
+    thescores = {}
+    with open(localfile, 'rt') as fid:
+        for line in fid:
+            stuid, score = line.split('\t')
+            thescores[int(stuid)] = int(score)
+    return thescores
+
+def fetch_grades(quizids, localfile='grades'):
+    if gradesfound(localfile):
+        print('Not fetching grades, using file {localfile}', file=sys.stderr)
+        return load_grades(localfile)
+    return allgrades(quizids)
 
 if __name__ == '__main__':
     try:
@@ -62,5 +84,5 @@ if __name__ == '__main__':
 
     with canvas_session() as s:
         for quizid in quizids:
-            printgrades(s, quizid)
+            print_grades(s, quizid)
 
