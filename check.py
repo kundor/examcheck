@@ -9,7 +9,6 @@ from collections import namedtuple, Counter, defaultdict
 
 import simhash
 import IPython
-from traitlets.config import get_config
 from openpyxl import load_workbook
 
 from canvas import *
@@ -186,7 +185,4 @@ for info in infos:
 
 
 
-
-c = get_config()
-c.InteractiveShellEmbed.colors = "Linux"
-IPython.embed(config=c)
+IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
