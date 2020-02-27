@@ -50,7 +50,8 @@ namequivs = [{'Abby', 'Abigail'},
              {'Zac', 'Zak', 'Zach', 'Zack', 'Zachary'}]
 namequivs = [{nam.casefold() for nam in nams} for nams in namequivs]
 
-studict = {codename(stu) : stu for stu in students}
+studict = {stu['id'] : stu for stu in students}
+namedict = {codename(stu) : stu for stu in students}
 
 def namebag(name):
     name = re.sub("[,\./_-]", ' ', name.casefold()).replace("'", "").split()
@@ -133,12 +134,13 @@ def loadmod(fid):
 
 modders = load_file('all-modder', loadmod)
 
-def checkmodder(name, modder):
+def checkmodder(sid, modder):
     try:
-        stu = studict[name]
+        stu = studict[sid]
     except KeyError:
-        print(name, 'not found in students.json.')
+        print(sid, 'not found in students.json.')
         return Status.DNE
+    name = codename(stu)
     if name not in modders:
         print(name, 'not found in all-modder')
         return Status.DNE
@@ -196,7 +198,7 @@ if __name__ == '__main__':
             if stat is Status.Approved:
                 modders[name].append(modder)
             elif stat is Status.Unknown:
-                stuname = studict[name]['name']
+                stuname = namedict[name]['name']
                 addit = input(f'User {stuname}: modder {modder}. Add? ')
                 if addit.lower() in {'y', 'yes'}:
                     modders[name].append(modder)

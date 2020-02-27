@@ -97,7 +97,7 @@ with open(origfile, 'rb') as origfid:
 cellfiles = defaultdict(list)
 infos = []
 grades = allgrades(quizids)
-codenames = Counter()
+stuids = Counter()
 xlhashes = Counter()
 csvhashes = Counter()
 
@@ -120,15 +120,16 @@ for subfile in subfiles:
             else:
                 print('Not a xlsx file: ' + filename, file=sys.stderr)
                 continue
-            codename = filename[:filename.find('_')]
-            codenames[codename] += 1
-            if codenames[codename] > 1:
-                print(f'{codename} seen {codenames[codename]} times')
+            codename, stuid, subid, *fn = filename.split('_')
+            stuid = int(stuid)
+            stuids[stuid] += 1
+            if stuids[stuid] > 1:
+                print(f'{codename} seen {stuids[stuid]} times')
                 if xlhash == originfo.xlhash:
                     print('This one is unmodified, ignoring')
                     fdata.close()
                     continue
-                prev = [inf for inf in infos if inf.filename.startswith(codename + '_')]
+                prev = [inf for inf in infos if int(inf.filename.split('_')[1]) == stuid]
                 if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
                     infos.remove(prev[0])
                     print(f'Removing unmodified file {prev[0].filename}')
@@ -144,7 +145,7 @@ for subfile in subfiles:
                 continue
             bsum = blake2b(digest_size=24)
             shingles = []
-            with open(codename + '.csv', 'wt') as csv:
+            with open(f'{codename}_{stuid}.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
                     for row in ws.values:
@@ -170,12 +171,13 @@ for subfile in subfiles:
 
 for info in infos:
     # Update all modder names afterward, so the long conversion process isn't held up by prompts
-    codename = info.filename[:info.filename.find('_')]
-    stat = checkmodder(codename, info.modder)
+    codename, stuid, subid, *fn = info.filename.split('_')
+    stuid = int(stuid)
+    stat = checkmodder(stuid, info.modder)
     # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
     if stat is Status.DNE:
         continue
-    stu = studict[codename]
+    stu = studict[stuid]
     if stat is Status.Unknown:
         addit = input(f"User {stu['name']}: modder '{info.modder}'. Add? ")
         if addit.lower() in {'y', 'yes'}:
