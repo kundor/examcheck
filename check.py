@@ -74,15 +74,15 @@ def getinfo(filename, workbook, xlhash=None, csvhash=None, simhash=None):
                 csvhash,
                 simhash)
 
-def bsum(buf):
+def blakesum(buf):
     bsum = blake2b(buf, digest_size=24)
     return bsum.hexdigest()
 
 def bsum_fid(fid):
-    return bsum(mmap.mmap(fid.fileno(), 0, access=mmap.ACCESS_READ))
+    return blakesum(mmap.mmap(fid.fileno(), 0, access=mmap.ACCESS_READ))
 
 def bsum_mem(bytio):
-    return bsum(bytio.getbuffer())
+    return blakesum(bytio.getbuffer())
 
 def gethash(shingles):
     hashvector = [simhash.unsigned_hash(s.encode()) for s in shingles]
