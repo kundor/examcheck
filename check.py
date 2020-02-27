@@ -87,6 +87,31 @@ def gethash(shingles):
     hashvector = [simhash.unsigned_hash(s.encode()) for s in shingles]
     return simhash.compute(hashvector)
 
+def sumprint(line, bsum, out):
+    if out:
+        print(line, file=out)
+    bsum.update((line + '\n').encode())
+
+def process_cells(workbook, cellfiles, csvout=None):
+    """Visit all cells of the workbook, printing to csvout if given,
+    and return the set of (ref-erased) cells and blake and sim hashes."""
+    bsum = blake2b(digest_size=24)
+    shingles = []
+    mycells = {}
+    for ws in workbook.worksheets:
+        ws.reset_dimensions()
+        for row in ws.values:
+            rowstr = ','.join(str(c) if c is not None else '' for c in row).rstrip(',')
+            sumprint(rowstr, bsum, csvout)
+            rowcells = [cleanval(c) for c in row if c is not None]
+            mycells.update(rowcells)
+            if len(rowcells) >= 3:
+                shingles += [' '.join(cells) for cells in simhash.shingle(rowcells, 3)]
+            else:
+                shingles += [' '.join(rowcells)]
+        sumprint(SHEETSEP, bsum, csvout)
+    return mycells, bsum.hexdigest(), gethash(shingles)
+
 with open(origfile, 'rb') as origfid:
     xlhash = bsum_fid(origfid)
     origwb = load_workbook(origfid, read_only=True)
@@ -94,9 +119,9 @@ with open(origfile, 'rb') as origfid:
     originfo = getinfo(origfile, origwb, xlhash)
     origwb.close()
 
-cellfiles = defaultdict(list)
+cellfiles = defaultdict(list) # map cell_content : files
 infos = []
-grades = fetch_grades(quizids)
+grades = fetch_grades(quizids) # map student_id : score
 stuids = Counter()
 xlhashes = Counter()
 csvhashes = Counter()
@@ -143,28 +168,11 @@ for subfile in subfiles:
             except BadZipFile as e:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
-            bsum = blake2b(digest_size=24)
-            shingles = []
             with open(f'{codename}_{stuid}.csv', 'wt') as csv:
-                for ws in wb.worksheets:
-                    ws.reset_dimensions()
-                    for row in ws.values:
-                        rowstr = ','.join(str(c) if c is not None else '' for c in row).rstrip(',')
-                        print(rowstr, file=csv)
-                        bsum.update((rowstr + '\n').encode())
-                        rowcells = [cleanval(c) for c in row if c is not None]
-                        if len(rowcells) >= 3:
-                            shingles += [' '.join(cells) for cells in simhash.shingle(rowcells, 3)]
-                        else:
-                            shingles += [' '.join(rowcells)]
-                        for cval in rowcells:
-                            if cval not in origcells:
-                                cellfiles[cval].append(filename)
-                    print(SHEETSEP, file=csv)
-                    bsum.update((SHEETSEP + '\n').encode())
-            csvhash = bsum.hexdigest()
+                thecells, csvhash, thehash = process_cells(wb, cellfiles, csv)
+            for cval in thecells - origcells:
+                cellfiles[cval].append(filename)
             csvhashes[csvhash] += 1
-            thehash = gethash(shingles)
             infos.append(getinfo(filename, wb, xlhash, csvhash, thehash))
             wb.close()
             fdata.close()
