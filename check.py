@@ -84,6 +84,10 @@ def bsum_fid(fid):
 def bsum_mem(bytio):
     return bsum(bytio.getbuffer())
 
+def gethash(shingles):
+    hashvector = [simhash.unsigned_hash(s.encode()) for s in shingles]
+    return simhash.compute(hashvector)
+
 with open(origfile, 'rb') as origfid:
     xlhash = bsum_fid(origfid)
     origwb = load_workbook(origfid, read_only=True)
@@ -153,7 +157,7 @@ for subfile in subfiles:
                     bsum.update((SHEETSEP + '\n').encode())
             csvhash = bsum.hexdigest()
             csvhashes[csvhash] += 1
-            thehash = simhash.compute([simhash.unsigned_hash(s) for s in shingles])
+            thehash = gethash(shingles)
             infos.append(getinfo(filename, wb, xlhash, csvhash, thehash))
             wb.close()
             fdata.close()
