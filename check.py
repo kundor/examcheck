@@ -5,8 +5,9 @@ import mmap
 import subprocess
 from hashlib import blake2b
 from zipfile import ZipFile, BadZipFile
-from collections import namedtuple, Counter
+from collections import namedtuple, Counter, defaultdict
 
+import simhash
 import IPython
 from traitlets.config import get_config
 from openpyxl import load_workbook
@@ -54,16 +55,24 @@ SHEETSEP = '----------'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
-Info = namedtuple('Info', ('filename', 'creation', 'creator', 'modified', 'modder', 'xlhash', 'csvhash'), defaults=(None, None))
+Info = namedtuple('Info', ('filename',
+            'creation',
+            'creator',
+            'modified',
+            'modder',
+            'xlhash',
+            'csvhash',
+            'simhash'), defaults=(None, None, None))
 
-def getinfo(workbook, xlhash=None, csvhash=None):
+def getinfo(workbook, xlhash=None, csvhash=None, simhash=None):
     return Info(filename,
                 workbook.properties.created,
                 workbook.properties.creator,
                 workbook.properties.modified,
                 workbook.properties.last_modified_by or '',
                 xlhash,
-                csvhash)
+                csvhash,
+                simhash)
 
 def bsum(buf):
     bsum = blake2b(buf, digest_size=24)
@@ -82,7 +91,7 @@ with open(origfile, 'rb') as origfid:
     originfo = getinfo(origwb, xlhash)
     origwb.close()
 
-cellfiles = {}
+cellfiles = defaultdict(list)
 infos = []
 grades = allgrades(quizids)
 codenames = Counter()
@@ -127,6 +136,7 @@ for subfile in subfiles:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
             bsum = blake2b(digest_size=24)
+            shingles = []
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
@@ -134,19 +144,17 @@ for subfile in subfiles:
                         rowstr = ','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(',')
                         print(rowstr, file=csv)
                         bsum.update((rowstr + '\n').encode())
-                        for c in row:
-                            if c.value is not None:
-                                cval = cleanval(c.value)
-                                if cval not in origcells:
-                                    if cval not in cellfiles:
-                                        cellfiles[cval] = [filename]
-                                    else:
-                                        cellfiles[cval].append(filename)
+                        rowcells = [cleanval(c.value) for c in row if c.value is not None]
+                        shingles += [' '.join(cells) for cells in simhash.shingle(rowcells, 3)]
+                        for cval in rowcells:
+                            if cval not in origcells:
+                                cellfiles[cval].append(filename)
                     print(SHEETSEP, file=csv)
                     bsum.update((SHEETSEP + '\n').encode())
             csvhash = bsum.hexdigest()
             csvhashes[csvhash] += 1
-            infos.append(getinfo(wb, xlhash, csvhash))
+            thehash = simhash.compute([simhash.unsigned_hash(s) for s in shingles])
+            infos.append(getinfo(wb, xlhash, csvhash, thehash))
             wb.close()
             fdata.close()
 
