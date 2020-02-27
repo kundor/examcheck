@@ -102,6 +102,9 @@ codenames = Counter()
 xlhashes = Counter()
 csvhashes = Counter()
 
+warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
+warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
+
 for subfile in subfiles:
     with ZipFile(subfile, 'r') as subs:
         for filename in sorted(subs.namelist()):
@@ -111,7 +114,8 @@ for subfile in subfiles:
             elif filename.endswith('.xls'):
                 print(f'Converting {filename} to xlsx', file=sys.stderr)
                 subs.extract(filename)
-                subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename])
+                subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename],
+                        stdout=subprocess.DEVNULL)
                 fdata = open(filename + 'x', 'rb')
                 xlhash = bsum_fid(fdata)
             else:
