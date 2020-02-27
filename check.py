@@ -63,14 +63,27 @@ def getinfo(workbook, xlhash=None, csvhash=None):
                 xlhash,
                 csvhash)
 
-origwb = load_workbook(origfile, read_only=True)
-origcells = thecells(origwb)
-originfo = getinfo(origwb)
-origwb.close()
+def bsum(buf):
+    bsum = blake2b(buf, digest_size=24)
+    return bsum.hexdigest()
+
+def bsum_fid(fid):
+    return bsum(mmap.mmap(fid.fileno(), 0, access=mmap.ACCESS_READ))
+
+def bsum_mem(bytio):
+    return bsum(bytio.getbuffer())
+
+with open(origfile, 'rb') as origfid:
+    xlhash = bsum_fid(origfid)
+    origwb = load_workbook(origfid, read_only=True)
+    origcells = thecells(origwb)
+    originfo = getinfo(origwb, xlhash)
+    origwb.close()
 
 cellfiles = {}
 infos = []
 grades = allgrades(quizids)
+codenames = Counter()
 xlhashes = Counter()
 csvhashes = Counter()
 
@@ -79,20 +92,32 @@ for subfile in subfiles:
         for filename in sorted(subs.namelist()):
             if filename.endswith('.xlsx'):
                 fdata = io.BytesIO(subs.read(filename))
-                buf = fdata.getbuffer()
+                xlhash = bsum_mem(fdata)
             elif filename.endswith('.xls'):
                 print(f'Converting {filename} to xlsx', file=sys.stderr)
                 subs.extract(filename)
                 subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename])
                 fdata = open(filename + 'x', 'rb')
-                buf = mmap.mmap(fdata.fileno(), 0, access=mmap.ACCESS_READ)
+                xlhash = bsum_fid(fdata)
             else:
                 print('Not a xlsx file: ' + filename, file=sys.stderr)
                 continue
             codename = filename[:filename.find('_')]
-            bsum = blake2b(buf, digest_size=24)
-            xlhash = bsum.hexdigest()
-            del buf, bsum
+            codenames[codename] += 1
+            if codenames[codename] > 1:
+                print(f'{codename} seen {codenames[codename]} times')
+                if xlhash == originfo.xlhash:
+                    print('This one is unmodified, ignoring')
+                    fdata.close()
+                    continue
+                prev = [inf for inf in infos if inf.filename.startswith(codename + '_')]
+                if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
+                    infos.remove(prev[0])
+                    print(f'Removing unmodified file {prev[0].filename}')
+                elif any(p.xlhash == xlhash for p in prev):
+                    print('This one is identical to a previously seen file; ignoring.')
+                    fdata.close()
+                    continue
             xlhashes[xlhash] += 1
             try:
                 wb = load_workbook(fdata, read_only=True)
