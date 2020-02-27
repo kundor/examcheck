@@ -64,12 +64,12 @@ Info = namedtuple('Info', ('filename',
             'csvhash',
             'simhash'), defaults=(None, None, None))
 
-def getinfo(workbook, xlhash=None, csvhash=None, simhash=None):
+def getinfo(filename, workbook, xlhash=None, csvhash=None, simhash=None):
     return Info(filename,
                 workbook.properties.created,
                 workbook.properties.creator,
                 workbook.properties.modified,
-                workbook.properties.last_modified_by or '',
+                workbook.properties.last_modified_by or '\u2205',
                 xlhash,
                 csvhash,
                 simhash)
@@ -88,7 +88,7 @@ with open(origfile, 'rb') as origfid:
     xlhash = bsum_fid(origfid)
     origwb = load_workbook(origfid, read_only=True)
     origcells = thecells(origwb)
-    originfo = getinfo(origwb, xlhash)
+    originfo = getinfo(origfile, origwb, xlhash)
     origwb.close()
 
 cellfiles = defaultdict(list)
@@ -154,7 +154,7 @@ for subfile in subfiles:
             csvhash = bsum.hexdigest()
             csvhashes[csvhash] += 1
             thehash = simhash.compute([simhash.unsigned_hash(s) for s in shingles])
-            infos.append(getinfo(wb, xlhash, csvhash, thehash))
+            infos.append(getinfo(filename, wb, xlhash, csvhash, thehash))
             wb.close()
             fdata.close()
 
