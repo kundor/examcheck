@@ -5,7 +5,7 @@ import mmap
 import subprocess
 from zipfile import ZipFile, BadZipFile
 from canvas import *
-from collections import namedtuple
+from collections import namedtuple, Counter
 from hashlib import blake2b
 from openpyxl import load_workbook
 from uniquecells import thecells, cleanval
@@ -71,6 +71,8 @@ origwb.close()
 cellfiles = {}
 infos = []
 grades = allgrades(quizids)
+xlhashes = Counter()
+csvhashes = Counter()
 
 for subfile in subfiles:
     with ZipFile(subfile, 'r') as subs:
@@ -91,6 +93,7 @@ for subfile in subfiles:
             bsum = blake2b(buf, digest_size=24)
             xlhash = bsum.hexdigest()
             del buf, bsum
+            xlhashes[xlhash] += 1
             try:
                 wb = load_workbook(fdata, read_only=True)
             except BadZipFile as e:
@@ -115,6 +118,7 @@ for subfile in subfiles:
                     print(SHEETSEP, file=csv)
                     bsum.update((SHEETSEP + '\n').encode())
             csvhash = bsum.hexdigest()
+            csvhashes[csvhash] += 1
             infos.append(getinfo(wb, xlhash, csvhash))
             wb.close()
             fdata.close()
