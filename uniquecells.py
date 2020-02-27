@@ -7,9 +7,9 @@ from openpyxl import load_workbook
 import IPython
 from traitlets.config import get_config
 
-refpat = re.compile(r"\$?[A-Z]{1,3}\$?[0-9]{1,5}")
-colpat = re.compile(r"(\$?[A-Z]{1,3}):\1")
-rowpat = re.compile(r"(\$?[0-9]{1,5}):\1")
+refpat = re.compile(r"\b\$?[A-Z]{1,2}\$?[0-9]{1,5}\b")
+colpat = re.compile(r"\b(\$?[A-Z]{1,2}):\1\b")
+rowpat = re.compile(r"\b(\$?[0-9]{1,5}):\1\b")
 numpat = re.compile(r'-?[0-9]+\.?[0-9]+')
 
 def cleanval(cellval):
