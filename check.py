@@ -148,12 +148,15 @@ for subfile in subfiles:
             with open(codename + '.csv', 'wt') as csv:
                 for ws in wb.worksheets:
                     ws.reset_dimensions()
-                    for row in ws.rows:
-                        rowstr = ','.join(str(c.value) if c.value is not None else '' for c in row).rstrip(',')
+                    for row in ws.values:
+                        rowstr = ','.join(str(c) if c is not None else '' for c in row).rstrip(',')
                         print(rowstr, file=csv)
                         bsum.update((rowstr + '\n').encode())
-                        rowcells = [cleanval(c.value) for c in row if c.value is not None]
-                        shingles += [' '.join(cells) for cells in simhash.shingle(rowcells, 3)]
+                        rowcells = [cleanval(c) for c in row if c is not None]
+                        if len(rowcells) >= 3:
+                            shingles += [' '.join(cells) for cells in simhash.shingle(rowcells, 3)]
+                        else:
+                            shingles += [' '.join(rowcells)]
                         for cval in rowcells:
                             if cval not in origcells:
                                 cellfiles[cval].append(filename)
