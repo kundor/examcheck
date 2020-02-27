@@ -182,7 +182,7 @@ for fn in *xlsx
 do nm="${fn%%_*}"
     if [[ ! -e $nm.csv ]]; then
 #        echo "Converting $fn to $nm.csv"
-       ../xlsx2csv.py "$fn" > "$nm.csv"
+       ../xlsx2csv.py "$fn" "$nm.csv"
    fi
 done
 
