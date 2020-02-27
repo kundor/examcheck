@@ -70,7 +70,12 @@ def fetch_grades(quizids, localfile='grades'):
     if gradesfound(localfile):
         print('Not fetching grades, using file {localfile}', file=sys.stderr)
         return load_grades(localfile)
-    return all_grades(quizids)
+    scores = {}
+    with open(localfile, 'wt') as fid, canvas_session() as session:
+        for quizid in quizids:
+            for sid, score in stream_grades(session, quizid, scores):
+                print(f'{sid}\t{score}', file=fid)
+    return scores
 
 if __name__ == '__main__':
     try:
