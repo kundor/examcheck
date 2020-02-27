@@ -140,7 +140,7 @@ def checkmodder(sid, modder):
     except KeyError:
         print(sid, 'not found in students.json.')
         return Status.DNE
-    name = codename(stu)
+    name = codename(stu) #NOT UNIQUE
     if name not in modders:
         print(name, 'not found in all-modder')
         return Status.DNE
@@ -198,7 +198,7 @@ if __name__ == '__main__':
             if stat is Status.Approved:
                 modders[name].append(modder)
             elif stat is Status.Unknown:
-                stuname = namedict[name]['name']
+                stuname = namedict[name]['name'] # NOT UNIQUE
                 addit = input(f'User {stuname}: modder {modder}. Add? ')
                 if addit.lower() in {'y', 'yes'}:
                     modders[name].append(modder)
