@@ -3,16 +3,18 @@
 import io
 import mmap
 import subprocess
-from zipfile import ZipFile, BadZipFile
-from canvas import *
-from collections import namedtuple, Counter
 from hashlib import blake2b
+from zipfile import ZipFile, BadZipFile
+from collections import namedtuple, Counter
+
+import IPython
+from traitlets.config import get_config
 from openpyxl import load_workbook
+
+from canvas import *
 from uniquecells import thecells, cleanval
 from allgrades import allgrades
 from modderupdate import checkmodder, Status, modders, studict
-import IPython
-from traitlets.config import get_config
 
 if len(sys.argv) <= 2:
     sys.exit('Arguments: [quizid(s)] <submission zip file(s)> <original Module file>')
