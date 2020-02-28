@@ -111,7 +111,7 @@ def get_file_info(filename):
         cells, csvhash, thesimhash = process_cells(wb)
         theinfo = make_info(filename, wb, xlhash, csvhash, thesimhash)
         wb.close()
-    return theinfo
+    return cells, theinfo
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
