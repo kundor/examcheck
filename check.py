@@ -4,8 +4,9 @@ import io
 import mmap
 import subprocess
 from hashlib import blake2b
-from datetime import datetime
 from zipfile import ZipFile, BadZipFile
+from datetime import datetime
+from contextlib import closing
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 
@@ -55,16 +56,6 @@ def get_args(argv=sys.argv):
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
     return quizids, subfiles, origfile
 
-def make_info(filename, workbook, xlhash=None, csvhash=None, simhash=None):
-    return Info(filename,
-                workbook.properties.created,
-                workbook.properties.creator,
-                workbook.properties.modified,
-                workbook.properties.last_modified_by or '\u2205',
-                xlhash,
-                csvhash,
-                simhash)
-
 def blakesum(buf):
     bsum = blake2b(buf, digest_size=24)
     return bsum.hexdigest()
@@ -79,10 +70,21 @@ def gethash(shingles):
     hashvector = [simhash.unsigned_hash(s.encode()) for s in shingles]
     return simhash.compute(hashvector)
 
+def xls2xlsx(zipp, filename):
+    print(f'Converting {filename} to xlsx', file=sys.stderr)
+    zipp.extract(filename)
+    subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename],
+            stdout=subprocess.DEVNULL)
+    return open(filename + 'x', 'rb')
+
 def sumprint(line, bsum, out):
     if out:
         print(line, file=out)
     bsum.update((line + '\n').encode())
+
+def nameinfo(filename):
+    codename, stuid, subid, *fn = filename.split('_')
+    return codename, int(stuid), int(subid)
 
 def process_cells(workbook, csvout=None):
     """Visit all cells of the workbook, printing to csvout if given,
@@ -104,14 +106,22 @@ def process_cells(workbook, csvout=None):
         sumprint(SHEETSEP, bsum, csvout)
     return mycells, bsum.hexdigest(), gethash(shingles)
 
-def get_file_info(filename):
+def process_workbook(xlhash, filename, workbook):
+    cells, csvhash, simhash = process_cells(workbook)
+    return cells, Info(filename,
+                workbook.properties.created,
+                workbook.properties.creator,
+                workbook.properties.modified,
+                workbook.properties.last_modified_by or '\u2205',
+                xlhash,
+                csvhash,
+                simhash)
+
+def process_file(filename):
     with open(filename, 'rb') as fid:
         xlhash = bsum_fid(fid)
-        wb = load_workbook(fid, read_only=True)
-        cells, csvhash, thesimhash = process_cells(wb)
-        theinfo = make_info(filename, wb, xlhash, csvhash, thesimhash)
-        wb.close()
-    return cells, theinfo
+        with closing(load_workbook(fid, read_only=True)) as workbook:
+            return process_workbook(xlhash, filename, workbook)
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
@@ -127,7 +137,7 @@ def get_file_info(filename):
 
 quizids, subfiles, origfile = get_args()
 
-origcells, originfo = get_file_info(origfile)
+origcells, originfo = process_file(origfile)
 
 cellfiles = defaultdict(list) # map cell_content : files
 infos = []
@@ -146,17 +156,12 @@ for subfile in subfiles:
                 fdata = io.BytesIO(subs.read(filename))
                 xlhash = bsum_mem(fdata)
             elif filename.endswith('.xls'):
-                print(f'Converting {filename} to xlsx', file=sys.stderr)
-                subs.extract(filename)
-                subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename],
-                        stdout=subprocess.DEVNULL)
-                fdata = open(filename + 'x', 'rb')
+                fdata = xls2xlsx(subs, filename)
                 xlhash = bsum_fid(fdata)
             else:
                 print('Not a xlsx file: ' + filename, file=sys.stderr)
                 continue
-            codename, stuid, subid, *fn = filename.split('_')
-            stuid = int(stuid)
+            codename, stuid, subid = nameinfo(filename)
             stuids[stuid] += 1
             if stuids[stuid] > 1:
                 print(f'{codename} seen {stuids[stuid]} times')
@@ -164,7 +169,7 @@ for subfile in subfiles:
                     print('This one is unmodified, ignoring')
                     fdata.close()
                     continue
-                prev = [inf for inf in infos if int(inf.filename.split('_')[1]) == stuid]
+                prev = [inf for inf in infos if nameinfo(inf.filename)[1] == stuid]
                 if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
                     infos.remove(prev[0])
                     print(f'Removing unmodified file {prev[0].filename}')
@@ -178,19 +183,17 @@ for subfile in subfiles:
             except BadZipFile as e:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
                 continue
-            with open(f'{codename}_{stuid}.csv', 'wt') as csv:
-                thecells, csvhash, thehash = process_cells(wb, csv)
+            thecells, theinfo = process_workbook(xlhash, filename, wb)
             for cval in thecells - origcells:
                 cellfiles[cval].append(filename)
             csvhashes[csvhash] += 1
-            infos.append(make_info(filename, wb, xlhash, csvhash, thehash))
+            infos.append(theinfo)
             wb.close()
             fdata.close()
 
 for info in infos:
     # Update modder names afterward, so the long conversion process isn't held up by prompts
-    codename, stuid, subid, *fn = info.filename.split('_')
-    stuid = int(stuid)
+    codename, stuid, subid = nameinfo(filename)
     stat = checkmodder(stuid, info.modder)
     # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
     if stat is Status.DNE:
