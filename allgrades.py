@@ -5,6 +5,9 @@ from canvas import *
 studict = {stu['id'] : stu['name'] for stu in students}
 
 def stream_grades(session, quizid, seenscores={}):
+    # Passing the same seenscores dict for multiple invocations will update the scores
+    # The default seenscores, with no third argument, persists across all such invocations
+    # (So if you use this for non-equivalent assignments, you must pass a score dict)
     curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
     while curl:
         with session.get(curl) as response:
