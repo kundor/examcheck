@@ -4,8 +4,10 @@ import io
 import mmap
 import subprocess
 from hashlib import blake2b
+from datetime import datetime
 from zipfile import ZipFile, BadZipFile
-from collections import namedtuple, Counter, defaultdict
+from collections import Counter, defaultdict
+from dataclasses import dataclass
 
 import simhash
 import IPython
@@ -21,14 +23,16 @@ SHEETSEP = '----------'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
-Info = namedtuple('Info', ('filename',
-            'creation',
-            'creator',
-            'modified',
-            'modder',
-            'xlhash',
-            'csvhash',
-            'simhash'), defaults=(None, None, None))
+@dataclass
+class Info:
+    filename: str
+    creation: datetime
+    creator: str
+    modified: datetime
+    modder: str
+    xlhash: str
+    csvhash: str
+    simhash: int
 
 def get_args(argv=sys.argv):
     if len(argv) <= 2:
@@ -51,7 +55,7 @@ def get_args(argv=sys.argv):
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
     return quizids, subfiles, origfile
 
-def getinfo(filename, workbook, xlhash=None, csvhash=None, simhash=None):
+def make_info(filename, workbook, xlhash=None, csvhash=None, simhash=None):
     return Info(filename,
                 workbook.properties.created,
                 workbook.properties.creator,
@@ -105,7 +109,7 @@ def get_file_info(filename):
         xlhash = bsum_fid(fid)
         wb = load_workbook(fid, read_only=True)
         cells, csvhash, thesimhash = process_cells(wb)
-        theinfo = getinfo(filename, wb, xlhash, csvhash, thesimhash)
+        theinfo = make_info(filename, wb, xlhash, csvhash, thesimhash)
         wb.close()
     return theinfo
 
@@ -179,7 +183,7 @@ for subfile in subfiles:
             for cval in thecells - origcells:
                 cellfiles[cval].append(filename)
             csvhashes[csvhash] += 1
-            infos.append(getinfo(filename, wb, xlhash, csvhash, thehash))
+            infos.append(make_info(filename, wb, xlhash, csvhash, thehash))
             wb.close()
             fdata.close()
 
