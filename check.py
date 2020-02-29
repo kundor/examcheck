@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import io
+import csv
 import mmap
 import subprocess
 from hashlib import blake2b
@@ -20,9 +21,10 @@ from allgrades import fetch_grades
 from modderupdate import checkmodder, Status, modders, studict
 
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
-SHEETSEP = '----------'
+SHEETSEP = '----------\n'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
+csv.register_dialect('newline', lineterminator='\n')
 
 @dataclass
 class Info:
@@ -66,9 +68,6 @@ def bsum_fid(fid):
 def bsum_mem(bytio):
     return blakesum(bytio.getbuffer())
 
-def gethash(shingles):
-    hashvector = [simhash.unsigned_hash(s.encode()) for s in shingles]
-    return simhash.compute(hashvector)
 
 def xls2xlsx(zipp, filename):
     print(f'Converting {filename} to xlsx', file=sys.stderr)
@@ -77,37 +76,76 @@ def xls2xlsx(zipp, filename):
             stdout=subprocess.DEVNULL)
     return open(filename + 'x', 'rb')
 
-def sumprint(line, bsum, out):
-    if out:
-        print(line, file=out)
-    bsum.update((line + '\n').encode())
-
 def nameinfo(filename):
     codename, stuid, subid, *fn = filename.split('_')
     return codename, int(stuid), int(subid)
 
-def process_cells(workbook, csvout=None):
-    """Visit all cells of the workbook, printing to csvout if given,
-    and return the set of (ref-erased) cells and blake and sim hashes."""
-    bsum = blake2b(digest_size=24)
-    shingles = []
-    mycells = set()
+def process_cells(workbook, rowvisitors):
+    """Visit all rows of the workbook, passing to given RowVisitors,
+    and return their values."""
     for ws in workbook.worksheets:
         ws.reset_dimensions()
-        for row in ws.values:
-            rowstr = ','.join(str(c) if c is not None else '' for c in row).rstrip(',')
-            sumprint(rowstr, bsum, csvout)
-            rowcells = [cleanval(c) for c in row if c is not None]
-            mycells.update(rowcells)
-            if len(rowcells) >= 3:
-                shingles += [' '.join(cells) for cells in simhash.shingle(rowcells, 3)]
-            else:
-                shingles += [' '.join(rowcells)]
-        sumprint(SHEETSEP, bsum, csvout)
-    return mycells, bsum.hexdigest(), gethash(shingles)
+        maxrow = max(n for n,row in enumerate(ws.values) if any(row))
+        for row in ws.iter_rows(max_row=maxrow+1, values_only=True):
+            for visit in rowvisitors:
+                visit(row)
+        for visit in rowvisitors:
+            visit.newsheet()
+    return [rv.value() for rv in rowvisitors]
+
+class RowVisitor:
+    def newsheet(self):
+        pass
+
+class CellCollector(RowVisitor):
+    def __init__(self):
+        self.cells = set()
+    def __call__(self, row):
+        self.cells.update(cleanval(c) for c in row if c is not None)
+    def value(self):
+        return self.cells
+
+class BlakeHasher(RowVisitor):
+    def __init__(self):
+        self.bsum = blake2b(digest_size=24)
+    def __call__(self, row):
+        rowstr = ','.join(str(c) if c is not None else '' for c in row).rstrip(',') + '\n'
+        self.bsum.update(rowstr.encode())
+    def newsheet(self):
+        self.bsum.update(SHEETSEP.encode())
+    def value(self):
+        return self.bsum.hexdigest()
+
+class SimHasher(RowVisitor):
+    def __init__(self):
+        self.hashvector = []
+    @staticmethod
+    def hashval(shingle):
+        return simhash.unsigned_hash(shingle.encode())
+    def __call__(self, row):
+        rowcells = [cleanval(c) for c in row if c is not None]
+        if len(rowcells) >= 3:
+            shingles = [' '.join(cells) for cells in simhash.shingle(rowcells, 3)]
+        else:
+            shingles = [' '.join(rowcells)]
+        self.hashvector += [self.hashval(s) for s in shingles]
+    def value(self):
+        return simhash.compute(self.hashvector)
+
+class CSVPrinter(RowVisitor):
+    def __init__(self, filename):
+        self.fid = open(filename, 'wt')
+        self.writer = csv.writer(self.fid, 'newline')
+    def __call__(self, row):
+        maxcol = max((n for n,c in enumerate(row) if c is not None), default=-1)
+        self.writer.writerow(row[:maxcol+1])
+    def newsheet(self):
+        self.fid.write(SHEETSEP)
+    def value(self):
+        self.fid.close()
 
 def process_workbook(xlhash, filename, workbook):
-    cells, csvhash, simhash = process_cells(workbook)
+    cells, csvhash, simhash = process_cells(workbook, [CellCollector(), BlakeHasher(), SimHasher()]
     return cells, Info(filename,
                 workbook.properties.created,
                 workbook.properties.creator,
