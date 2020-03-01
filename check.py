@@ -7,7 +7,7 @@ from hashlib import blake2b
 from zipfile import ZipFile, BadZipFile
 from datetime import datetime
 from contextlib import closing
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from dataclasses import dataclass
 
 import simhash
@@ -23,6 +23,8 @@ from modderupdate import checkmodder, Status, modders, studict
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
+
+NameInfo = namedtuple('NameInfo', ('codename', 'stuid', 'subid'))
 
 @dataclass
 class Info:
@@ -73,9 +75,16 @@ def xls2xlsx(zipp, filename):
             stdout=subprocess.DEVNULL)
     return open(filename + 'x', 'rb')
 
+def filesize(fdata):
+    try:
+        size = fdata.getbuffer().nbytes
+    except AttributeError:
+        size = os.fstat(fdata.fileno()).st_size
+    return size
+
 def nameinfo(filename):
     codename, stuid, subid, *fn = filename.split('_')
-    return codename, int(stuid), int(subid)
+    return NameInfo(codename, int(stuid), int(subid))
 
 class BlakeHasher(RowVisitor):
     def __init__(self):
@@ -128,6 +137,19 @@ def report_nonxlsx(filename):
     except ValueError: #filename not in Canvas name_sid_sub_etc format
         return # no known student to report
     reports[stuid].append(f'Non-xlsx file: {filename}')
+
+def checktemp(filename, fdata):
+    stuid = nameinfo(filename).stuid
+    badname = '~' in filename
+    small = filesize(fdata) < 500
+    if small and badname:
+        reports[stuid].append('Temp file')
+    elif badname:
+        reports[stuid].append(f'Big temp file? {filename}')
+    elif small:
+        reports[stuid].append(f'Temp file? {filename}')
+    else:
+        reports[stuid].append(f'Not an Excel file? {filename}')
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
@@ -189,6 +211,7 @@ for subfile in subfiles:
                 wb = load_workbook(fdata, read_only=True)
             except BadZipFile as e:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
+                checktemp(filename, fdata)
                 continue
             thecells, theinfo = process_workbook(xlhash, filename, wb)
             for cval in thecells - origcells:
