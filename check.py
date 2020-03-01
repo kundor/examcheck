@@ -121,6 +121,14 @@ def process_file(filename):
         with closing(load_workbook(fid, read_only=True)) as workbook:
             return process_workbook(xlhash, filename, workbook)
 
+def report_nonxlsx(filename):
+    print('Not a xlsx file: ' + filename, file=sys.stderr)
+    try:
+        codename, stuid, subid = nameinfo(filename)
+    except ValueError: #filename not in Canvas name_sid_sub_etc format
+        return # no known student to report
+    reports[stuid].append(f'Non-xlsx file: {filename}')
+
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
 # However, it only gives an HTML page with authentication error :(
@@ -143,6 +151,7 @@ grades = fetch_grades(quizids) # map student_id : score
 stuids = Counter()
 xlhashes = Counter()
 csvhashes = Counter()
+reports = defaultdict(list) # map stuid : strings
 
 warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
 warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
@@ -157,7 +166,7 @@ for subfile in subfiles:
                 fdata = xls2xlsx(subs, filename)
                 xlhash = bsum_fid(fdata)
             else:
-                print('Not a xlsx file: ' + filename, file=sys.stderr)
+                report_nonxlsx(filename)
                 continue
             codename, stuid, subid = nameinfo(filename)
             stuids[stuid] += 1
