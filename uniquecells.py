@@ -3,8 +3,10 @@
 import re
 import sys
 import glob
-import IPython
 from contextlib import closing
+from collections import defaultdict
+
+import IPython
 from openpyxl import load_workbook
 from traitlets.config import get_config
 from xlsx2csv import process_cells, RowVisitor
@@ -33,6 +35,17 @@ def thecells(filename):
     with closing(load_workbook(filename, read_only=True)) as workbook:
         return process_cells(wb, [CellCollector()])
 
+def filerpts(cellfiles):
+    files = [0]*12 # Will hold all the n-tuples of files with a unique cell between them
+    rpts = [0]*12 # rpts[n] will be a dict of n-tuple : the number of cells unique to them
+    for n in range(2, 12):
+        files[n] = {tuple(ff) for ff in cellfiles.values() if len(f) == n}
+        rpts[n] = {ff: 0 for ff in files[n]}
+        for ff in cellfiles.values():
+            if len(ff) == n:
+                rpts[n][tuple(ff)] += 1
+    return files, rpts
+
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         sys.exit('One argument required: original module file')
@@ -40,24 +53,13 @@ if __name__ == '__main__':
     if not xlfiles:
         sys.exit('Should be in a directory containing .xlsx files')
     origcells = thecells(sys.argv[1])
-    cellfiles = {}
+    cellfiles = defaultdict(list)
     for xlfile in xlfiles:
         for cell in thecells(xlfile) - origcells:
-            if cell not in cellfiles:
-                cellfiles[cell] = [xlfile]
-            else:
-                cellfiles[cell].append(xlfile)
+            cellfiles[cell].append(xlfile)
 
 # follow up with something like
-    files = [0]*12
-    rpts = [0]*12
-    for n in range(2,12):
-        files[n] = set(tuple(f) for f in cellfiles.values() if len(f) == n) # all the n-tuples of files with cells appearing in only those n files
-        rpts[n] = {ff: 0 for ff in files[n]} # the number of cells unique to this n-tuple of files
-        for fs in cellfiles.values():
-            if len(fs) == n:
-                rpts[n][tuple(fs)] += 1
-
+    files, rpts = filerpts(cellfiles)
     for n in range(2, 12):
         big = max(rpts[n].values())
         msg = []
