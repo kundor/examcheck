@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import io
-import csv
 import mmap
 import subprocess
 from hashlib import blake2b
@@ -16,15 +15,14 @@ import IPython
 from openpyxl import load_workbook
 
 from canvas import *
+from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from uniquecells import cleanval
 from allgrades import fetch_grades
 from modderupdate import checkmodder, Status, modders, studict
 
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
-SHEETSEP = '----------\n'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
-csv.register_dialect('newline', lineterminator='\n')
 
 @dataclass
 class Info:
@@ -68,7 +66,6 @@ def bsum_fid(fid):
 def bsum_mem(bytio):
     return blakesum(bytio.getbuffer())
 
-
 def xls2xlsx(zipp, filename):
     print(f'Converting {filename} to xlsx', file=sys.stderr)
     zipp.extract(filename)
@@ -79,23 +76,6 @@ def xls2xlsx(zipp, filename):
 def nameinfo(filename):
     codename, stuid, subid, *fn = filename.split('_')
     return codename, int(stuid), int(subid)
-
-def process_cells(workbook, rowvisitors):
-    """Visit all rows of the workbook, passing to given RowVisitors,
-    and return their values."""
-    for ws in workbook.worksheets:
-        ws.reset_dimensions()
-        maxrow = max(n for n,row in enumerate(ws.values) if any(row))
-        for row in ws.iter_rows(max_row=maxrow+1, values_only=True):
-            for visit in rowvisitors:
-                visit(row)
-        for visit in rowvisitors:
-            visit.newsheet()
-    return [rv.value() for rv in rowvisitors]
-
-class RowVisitor:
-    def newsheet(self):
-        pass
 
 class CellCollector(RowVisitor):
     def __init__(self):
@@ -131,18 +111,6 @@ class SimHasher(RowVisitor):
         self.hashvector += [self.hashval(s) for s in shingles]
     def value(self):
         return simhash.compute(self.hashvector)
-
-class CSVPrinter(RowVisitor):
-    def __init__(self, filename):
-        self.fid = open(filename, 'wt')
-        self.writer = csv.writer(self.fid, 'newline')
-    def __call__(self, row):
-        maxcol = max((n for n,c in enumerate(row) if c is not None), default=-1)
-        self.writer.writerow(row[:maxcol+1])
-    def newsheet(self):
-        self.fid.write(SHEETSEP)
-    def value(self):
-        self.fid.close()
 
 def process_workbook(xlhash, filename, workbook):
     cells, csvhash, simhash = process_cells(workbook, [CellCollector(), BlakeHasher(), SimHasher()]
