@@ -408,7 +408,7 @@ if __name__ == '__main__':
         exams = fetch_exams(session, [examsID, altsID, finalid])
 
     allnames = [{'sid': stu['id'], 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
-    allnamestr = '\n'.join('\t'.join(s[k] for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
+    allnamestr = '\n'.join('\t'.join(str(s[k]) for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
     diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
 
     instsec = [{'name': tch['name'], 'sections': sorted(sec[1] for sec in tch['sections'])} for tch in teachers]
