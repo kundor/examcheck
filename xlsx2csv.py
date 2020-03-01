@@ -37,16 +37,20 @@ class CSVPrinter(RowVisitor):
     def value(self):
         self.fid.close()
 
-if __name__ = '__main__':
-    wb = load_workbook(filename=sys.argv[1], read_only=True)
-
-    if len(sys.argv) == 3:
-        outfile = sys.argv[2]
-    elif len(sys.argv) > 3:
-        sys.exit('Max two arguments, infile outfile')
+def get_args(argv=sys.argv):
+    if len(argv) < 2:
+        sys.exit('At least one argument, infile [outfile]')
+    infile = argv[1]
+    if len(argv) == 3:
+        outfile = argv[2]
+    elif len(argv) > 3:
+        sys.exit('Max two arguments, infile [outfile]')
     else:
-        root, ext = os.path.splitext(sys.argv[1])
+        root, ext = os.path.splitext(infile)
         outfile = root + '.csv'
+    return infile, outfile
 
+if __name__ = '__main__':
+    infile, outfile = get_args()
+    wb = load_workbook(filename=infile, read_only=True)
     process_cells(wb, [CSVPrinter(outfile)])
-
