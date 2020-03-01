@@ -407,8 +407,8 @@ if __name__ == '__main__':
         uploads = fetch_uploads(session, uploadsID)
         exams = fetch_exams(session, [examsID, altsID, finalid])
 
-    allnames = [{'codename': codename(stu), 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
-    allnamestr = '\n'.join('\t'.join(s[k] for k in ('codename', 'name', 'section')) for s in allnames) + '\n'
+    allnames = [{'sid': stu['id'], 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
+    allnamestr = '\n'.join('\t'.join(s[k] for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
     diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
 
     instsec = [{'name': tch['name'], 'sections': sorted(sec[1] for sec in tch['sections'])} for tch in teachers]
@@ -418,7 +418,7 @@ if __name__ == '__main__':
     if input('Create all-modder with full names? ').casefold() in {'y', 'yes'}:
         with open('all-modder', 'wt') as fid:
             for stu in studentinf:
-                fid.write(codename(stu) + '\t' + stu['name'] + '\n')
+                fid.write(stu['id'] + '\t' + stu['name'] + '\n')
     else:
         print('Not making all-modder. (`cut -f -2 allnames > all-modder` has same effect)')
 
