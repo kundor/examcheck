@@ -1,11 +1,13 @@
 #!/usr/bin/python3 -i
 
+import re
 import sys
 import glob
-import re
-from openpyxl import load_workbook
 import IPython
+from contextlib import closing
+from openpyxl import load_workbook
 from traitlets.config import get_config
+from xlsx2csv import process_cells, RowVisitor
 
 refpat = re.compile(r"\b\$?[A-Z]{1,2}\$?[1-9][0-9]{0,4}\b")
 colpat = re.compile(r"\b(\$?[A-Z]{1,2}):\1\b")
@@ -19,21 +21,17 @@ def cleanval(cellval):
     cval = rowpat.sub('ROW', cval)
     return cval
 
+class CellCollector(RowVisitor):
+    def __init__(self):
+        self.cells = set()
+    def __call__(self, row):
+        self.cells.update(cleanval(c) for c in row if c is not None)
+    def value(self):
+        return self.cells
+
 def thecells(filename):
-    contents = set()
-    if hasattr(filename, 'worksheets'): # an openpyxl workbook was passed in
-        wb = filename
-    else:
-        wb = load_workbook(filename=filename, read_only=True)
-    for ws in wb.worksheets:
-        #ws.reset_dimensions()
-        for row in ws.rows:
-            for c in row:
-                if c.value is not None:
-                    contents.add(cleanval(c.value))
-    if wb is not filename:
-        wb.close()
-    return contents
+    with closing(load_workbook(filename, read_only=True)) as workbook:
+        return process_cells(wb, [CellCollector()])
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:

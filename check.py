@@ -16,7 +16,7 @@ from openpyxl import load_workbook
 
 from canvas import *
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
-from uniquecells import cleanval
+from uniquecells import cleanval, CellCollector
 from allgrades import fetch_grades
 from modderupdate import checkmodder, Status, modders, studict
 
@@ -76,14 +76,6 @@ def xls2xlsx(zipp, filename):
 def nameinfo(filename):
     codename, stuid, subid, *fn = filename.split('_')
     return codename, int(stuid), int(subid)
-
-class CellCollector(RowVisitor):
-    def __init__(self):
-        self.cells = set()
-    def __call__(self, row):
-        self.cells.update(cleanval(c) for c in row if c is not None)
-    def value(self):
-        return self.cells
 
 class BlakeHasher(RowVisitor):
     def __init__(self):
