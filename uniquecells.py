@@ -4,7 +4,7 @@ import re
 import sys
 import glob
 from contextlib import closing
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 import IPython
 from openpyxl import load_workbook
@@ -36,15 +36,32 @@ def thecells(filename):
         return process_cells(wb, [CellCollector()])
 
 def filerpts(cellfiles):
-    files = [0]*12 # Will hold all the n-tuples of files with a unique cell between them
-    rpts = [0]*12 # rpts[n] will be a dict of n-tuple : the number of cells unique to them
-    for n in range(2, 12):
-        files[n] = {tuple(ff) for ff in cellfiles.values() if len(f) == n}
-        rpts[n] = {ff: 0 for ff in files[n]}
-        for ff in cellfiles.values():
-            if len(ff) == n:
-                rpts[n][tuple(ff)] += 1
-    return files, rpts
+    # tuple of filenames : # of cells appearing only in these files
+    return Counter(tuple(ff) for ff in cellfiles.values() if 2 <= len(ff) <= 20)
+
+def most_shared(rpts, cellfiles):
+    """Report the files with the most shared cells unique to them"""
+    for ff, numshared in rpts.most_common():
+        if numshared <= 6:
+            break
+        susp = list(ff)
+        thecels = [c for c in cellfiles if cellfiles[c] == susp]
+        notnums = [c for c in thecels if not numpat.fullmatch(c)]
+        if any(notnums):
+            print(f'{susp}: {numshared} matches')
+            print(notnums)
+# Check it out; are they suspicious or what? (Numbers usually turn out not to be)
+
+def pairs_few(rpts, cellfiles):
+    """Report pairs of files which share 2-6 unique cells"""
+    # Why?
+    for ff, v in rpts.items():
+        if len(ff) == 2 and 2 <= v <= 6: # these guys share 2-6 cells
+            print(ff, end=": ")
+            for c, fs in cellfiles.items():
+                if tuple(fs) == ff:
+                    print(c, end=', ')
+            print()
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
@@ -59,35 +76,10 @@ if __name__ == '__main__':
             cellfiles[cell].append(xlfile)
 
 # follow up with something like
-    files, rpts = filerpts(cellfiles)
-    for n in range(2, 12):
-        big = max(rpts[n].values())
-        msg = []
-        while big > 6:
-            suspsets = [ff for ff in rpts[n] if rpts[n][ff] == big]
-            for susp in suspsets:
-                susp = list(susp)
-                thecels = [c for c in cellfiles if cellfiles[c] == susp]
-                msg.append([c for c in thecels if not numpat.fullmatch(c)])
-            if any(msg):
-                print(f'Matches: {big}')
-            for susp, cc in zip(suspsets, msg):
-                if not cc:
-                    continue
-                print(susp)
-                print(cc)
-# # Check it out; are they suspicious or what? Numbers usually turn out not to be
-            big = max(v for v in rpts[n].values() if v < big)
-
+    rpts = Counter(tuple(ff) for ff in cellfiles.values())
+    most_shared(rpts, cellfiles)
 # Also consider:
-
-    for ff,v in rpts[2].items():
-        if 2 < v < 6: # these guys share 2-6 cells
-            print(ff, end=": ")
-            for c,fs in cellfiles.items():
-                if tuple(fs) == ff:
-                    print(c, end=', ')
-            print()
+    pairs_few(rpts, cellfiles)
 
     c = get_config()
     c.InteractiveShellEmbed.colors = "Linux"
