@@ -190,8 +190,7 @@ if __name__ == '__main__':
         omodr = ''
         for line in inf:
             fields = line[:-1].split('\t')
-            name = fields[0]
-            name = name[:name.find('_')]
+            name, stuid, subid = fileinfo(fields[0])
             modder = fields[6]
             if name == oname:
                 if modder == omodr:
