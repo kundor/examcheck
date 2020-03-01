@@ -11,9 +11,9 @@ from openpyxl import load_workbook
 from traitlets.config import get_config
 from xlsx2csv import process_cells, RowVisitor
 
-refpat = re.compile(r"\b\$?[A-Z]{1,2}\$?[1-9][0-9]{0,4}\b")
-colpat = re.compile(r"\b(\$?[A-Z]{1,2}):\1\b")
-rowpat = re.compile(r"(?<!:)\b(\$?[1-9][0-9]{0,4}):\1\b(?!:)")
+refpat = re.compile(r"\$?\b[A-Z]{1,2}\$?[1-9][0-9]{0,4}\b")
+colpat = re.compile(r"(?<![:$])(\$?\b[A-Z]{1,2}):\1\b")
+rowpat = re.compile(r"(?<![:$])\b(\$?[1-9][0-9]{0,4}):\1\b(?!:)")
 numpat = re.compile(r'-?[0-9]+\.?[0-9]+')
 
 def cleanval(cellval):
