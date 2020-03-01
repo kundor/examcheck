@@ -229,12 +229,12 @@ for info in infos:
     if stat is Status.DNE:
         continue
     stu = studict[stuid]
-    if stat is Status.Unknown:
+    if stat is Status.Approved:
+        modders[codename].append(modder)
+    elif stat is Status.Unknown:
         addit = input(f"User {stu['name']}: modder '{info.modder}'. Add? ")
         if addit.lower() in {'y', 'yes'}:
             modders[codename].append(info.modder)
-    # if multiple files, and some are identical, remove the later ones;
-    # if (still multiple and) some are unmodified, remove those
 
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
