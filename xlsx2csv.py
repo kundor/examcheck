@@ -13,7 +13,7 @@ def process_cells(workbook, rowvisitors):
     and return their values."""
     for ws in workbook.worksheets:
         ws.reset_dimensions()
-        maxrow = max(n for n,row in enumerate(ws.values) if any(row))
+        maxrow = max((n for n,row in enumerate(ws.values) if any(row)), default=0)
         for row in ws.iter_rows(max_row=maxrow+1, values_only=True):
             for visit in rowvisitors:
                 visit(row)
