@@ -76,7 +76,7 @@ if __name__ == '__main__':
             cellfiles[cell].append(xlfile)
 
 # follow up with something like
-    rpts = Counter(tuple(ff) for ff in cellfiles.values())
+    rpts = filerpts(cellfiles)
     most_shared(rpts, cellfiles)
 # Also consider:
     pairs_few(rpts, cellfiles)
