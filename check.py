@@ -133,7 +133,7 @@ def process_file(filename):
 def report_nonxlsx(filename):
     print('Not a xlsx file: ' + filename, file=sys.stderr)
     try:
-        codename, stuid, subid = nameinfo(filename)
+        stuid = nameinfo(filename).stuid
     except ValueError: #filename not in Canvas name_sid_sub_etc format
         return # no known student to report
     reports[stuid].append(f'Non-xlsx file: {filename}')
@@ -198,7 +198,7 @@ for subfile in subfiles:
                     print('This one is unmodified, ignoring')
                     fdata.close()
                     continue
-                prev = [inf for inf in infos if nameinfo(inf.filename)[1] == stuid]
+                prev = [inf for inf in infos if nameinfo(inf.filename).stuid == stuid]
                 if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
                     infos.remove(prev[0])
                     print(f'Removing unmodified file {prev[0].filename}')
