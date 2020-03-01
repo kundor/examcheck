@@ -50,7 +50,7 @@ def get_args(argv=sys.argv):
         outfile = root + '.csv'
     return infile, outfile
 
-if __name__ = '__main__':
+if __name__ == '__main__':
     infile, outfile = get_args()
     wb = load_workbook(filename=infile, read_only=True)
     process_cells(wb, [CSVPrinter(outfile)])
