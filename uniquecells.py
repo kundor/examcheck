@@ -33,7 +33,7 @@ class CellCollector(RowVisitor):
 
 def thecells(filename):
     with closing(load_workbook(filename, read_only=True)) as workbook:
-        return process_cells(wb, [CellCollector()])
+        return process_cells(workbook, [CellCollector()])[0]
 
 def filerpts(cellfiles):
     # tuple of filenames : # of cells appearing only in these files
