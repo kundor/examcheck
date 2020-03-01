@@ -50,6 +50,7 @@ def most_shared(rpts, cellfiles):
         if any(notnums):
             print(f'{susp}: {numshared} matches')
             print(notnums)
+            print()
 # Check it out; are they suspicious or what? (Numbers usually turn out not to be)
 
 def pairs_few(rpts, cellfiles):
