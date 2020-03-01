@@ -224,11 +224,11 @@ for info in infos:
         continue
     stu = studict[stuid]
     if stat is Status.Approved:
-        modders[codename].append(modder)
+        modders[stuid].append(modder)
     elif stat is Status.Unknown:
         addit = input(f"User {stu['name']}: modder '{info.modder}'. Add? ")
         if addit.lower() in {'y', 'yes'}:
-            modders[codename].append(info.modder)
+            modders[stuid].append(info.modder)
 
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())

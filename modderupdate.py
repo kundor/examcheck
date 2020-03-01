@@ -136,7 +136,7 @@ def loadmod(fid):
     modders = {}
     for line in fid:
         mflds = line[:-1].split('\t')
-        modders[mflds[0]] = mflds[1:]
+        modders[int(mflds[0])] = mflds[1:]
     return modders
 
 modders = load_file('all-modder', loadmod)
@@ -147,19 +147,18 @@ def checkmodder(sid, modder):
     except KeyError:
         print(sid, 'not found in students.json.')
         return Status.DNE
-    name = codename(stu) #NOT UNIQUE
-    if name not in modders:
-        print(name, 'not found in all-modder')
+    if sid not in modders:
+        print(f'{sid} ({stu["name"]}) not found in all-modder')
         return Status.DNE
     moddbag = namebag(modder)
-    oldbags = [namebag(omod) for omod in modders[name]]
-    if modder in modders[name]:
+    oldbags = [namebag(omod) for omod in modders[sid]]
+    if modder in modders[sid]:
         return Status.Found
     elif modder == 'Elizabeth L. Grulke':
         return Status.Boo
     elif modder in ('Microsoft Office User', 'Microsoft Office 用户'):
         return Status.Approved
-    elif modder.strip().casefold() in [mname.strip().casefold() for mname in modders[name]]: # auto-approve
+    elif modder.strip().casefold() in [mname.strip().casefold() for mname in modders[sid]]: # auto-approve
         return Status.Approved
     elif moddbag and (any(moddbag.issubset(obag) for obag in oldbags) or oldbags[0].issubset(moddbag)):
         print(f'Adding modder {modder} for user {stu["name"]}')
@@ -202,13 +201,13 @@ if __name__ == '__main__':
             omodr = modder
             stat = checkmodder(name, modder)
             if stat is Status.Approved:
-                modders[name].append(modder)
+                modders[stuid].append(modder)
             elif stat is Status.Unknown:
                 stuname = namedict[name]['name'] # NOT UNIQUE
                 addit = input(f'User {stuname}: modder {modder}. Add? ')
                 if addit.lower() in {'y', 'yes'}:
-                    modders[name].append(modder)
+                    modders[stuid].append(modder)
 
     with open('allmod2', 'wt') as new:
-        for code, mods in modders.items():
-            new.write(code + '\t' + '\t'.join(mods) + '\n')
+        for sid, mods in modders.items():
+            new.write(str(sid) + '\t' + '\t'.join(mods) + '\n')
