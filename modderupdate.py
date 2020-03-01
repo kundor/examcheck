@@ -3,9 +3,11 @@ import sys
 import os
 import re
 from enum import Enum
+from collections import namedtuple
 from canvas import codename, students, alphaonly, load_file
 
 Status = Enum('Status', ('Found', 'Approved', 'DNE', 'Boo', 'Unknown'))
+FileInfo = namedtuple('FileInfo', ('codename', 'stuid', 'subid'))
 
 # Name equivalence classes
 namequivs = [{'Abby', 'Abigail'},
@@ -52,6 +54,11 @@ namequivs = [{nam.casefold() for nam in nams} for nams in namequivs]
 
 studict = {stu['id'] : stu for stu in students}
 namedict = {codename(stu) : stu for stu in students}
+
+def fileinfo(filename):
+    """Get the metadata included in Canvas-generated filenames"""
+    codename, stuid, subid, *fn = filename.split('_')
+    return FileInfo(codename, int(stuid), int(subid))
 
 def namebag(name):
     name = re.sub("[,\./_-]", ' ', name.casefold()).replace("'", "").split()

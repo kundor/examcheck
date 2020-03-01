@@ -7,7 +7,7 @@ from hashlib import blake2b
 from zipfile import ZipFile, BadZipFile
 from datetime import datetime
 from contextlib import closing
-from collections import Counter, defaultdict, namedtuple
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 
 import simhash
@@ -18,13 +18,11 @@ from canvas import *
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from uniquecells import cleanval, CellCollector
 from allgrades import fetch_grades
-from modderupdate import checkmodder, Status, modders, studict
+from modderupdate import checkmodder, Status, modders, studict, fileinfo
 
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
-
-NameInfo = namedtuple('NameInfo', ('codename', 'stuid', 'subid'))
 
 @dataclass
 class Info:
@@ -82,10 +80,6 @@ def filesize(fdata):
         size = os.fstat(fdata.fileno()).st_size
     return size
 
-def nameinfo(filename):
-    codename, stuid, subid, *fn = filename.split('_')
-    return NameInfo(codename, int(stuid), int(subid))
-
 class BlakeHasher(RowVisitor):
     def __init__(self):
         self.bsum = blake2b(digest_size=24)
@@ -133,13 +127,13 @@ def process_file(filename):
 def report_nonxlsx(filename):
     print('Not a xlsx file: ' + filename, file=sys.stderr)
     try:
-        stuid = nameinfo(filename).stuid
+        stuid = fileinfo(filename).stuid
     except ValueError: #filename not in Canvas name_sid_sub_etc format
         return # no known student to report
     reports[stuid].append(f'Non-xlsx file: {filename}')
 
 def checktemp(filename, fdata):
-    stuid = nameinfo(filename).stuid
+    stuid = fileinfo(filename).stuid
     badname = '~' in filename
     small = filesize(fdata) < 500
     if small and badname:
@@ -190,7 +184,7 @@ for subfile in subfiles:
             else:
                 report_nonxlsx(filename)
                 continue
-            codename, stuid, subid = nameinfo(filename)
+            codename, stuid, subid = fileinfo(filename)
             stuids[stuid] += 1
             if stuids[stuid] > 1:
                 print(f'{codename} seen {stuids[stuid]} times')
@@ -198,7 +192,7 @@ for subfile in subfiles:
                     print('This one is unmodified, ignoring')
                     fdata.close()
                     continue
-                prev = [inf for inf in infos if nameinfo(inf.filename).stuid == stuid]
+                prev = [inf for inf in infos if fileinfo(inf.filename).stuid == stuid]
                 if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
                     infos.remove(prev[0])
                     print(f'Removing unmodified file {prev[0].filename}')
@@ -223,7 +217,7 @@ for subfile in subfiles:
 
 for info in infos:
     # Update modder names afterward, so the long conversion process isn't held up by prompts
-    codename, stuid, subid = nameinfo(filename)
+    codename, stuid, subid = fileinfo(filename)
     stat = checkmodder(stuid, info.modder)
     # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
     if stat is Status.DNE:
