@@ -53,7 +53,6 @@ namequivs = [{'Abby', 'Abigail'},
 namequivs = [{nam.casefold() for nam in nams} for nams in namequivs]
 
 studict = {stu['id'] : stu for stu in students}
-namedict = {codename(stu) : stu for stu in students}
 
 def fileinfo(filename):
     """Get the metadata included in Canvas-generated filenames"""
@@ -171,6 +170,18 @@ def checkmodder(sid, modder):
         return Status.Approved
     return Status.Unknown
 
+def checkadd(sid, modder):
+    stat = checkmodder(sid, modder)
+    if stat is Status.Approved:
+        modders[sid].append(modder)
+    elif stat is Status.Unknown:
+        stuname = studict[sid]['name'] 
+        addit = input(f'User {stuname}: modder {modder}. Add? ')
+        if addit.lower() in {'y', 'yes'}:
+            modders[sid].append(modder)
+            return Status.Approved
+    return stat
+
 if __name__ == '__main__':
     if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
         sys.exit('Must run in directory containing all-modder and students.json files')
@@ -199,14 +210,7 @@ if __name__ == '__main__':
                 continue
             oname = name
             omodr = modder
-            stat = checkmodder(name, modder)
-            if stat is Status.Approved:
-                modders[stuid].append(modder)
-            elif stat is Status.Unknown:
-                stuname = namedict[name]['name'] # NOT UNIQUE
-                addit = input(f'User {stuname}: modder {modder}. Add? ')
-                if addit.lower() in {'y', 'yes'}:
-                    modders[stuid].append(modder)
+            stat = checkadd(stuid, modder)
 
     with open('allmod2', 'wt') as new:
         for sid, mods in modders.items():
