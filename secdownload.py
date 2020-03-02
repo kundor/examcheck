@@ -78,7 +78,7 @@ with canvas_session() as s:
                 continue
             if numatt != 1:
                 print(f'{stu["name"]}: {numatt} attachments, ?')
-            dst = codename(stu) + '_' + sub['attachments'][-1]['filename']
+            dst = f'{codename(stu)}_{sid}_' + sub['attachments'][-1]['filename']
             url = sub['attachments'][-1]['url']
             print('Fetching', dst, '... ', end='', flush=True)
             with s.get(url, stream=True) as fileget, open(dst, 'wb') as out:
