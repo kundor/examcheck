@@ -225,6 +225,13 @@ for info in infos:
     stu = studict[stuid]
     if stat is Status.Unknown:
         reports[stuid].append(f'Last modified by {info.modder}')
+    elif stat is Status.Boo and info.xlhash == originfo.xlhash:
+        reports[stuid].append('Unmodified')
+    elif stat is Status.Boo and info.modified == originfo.modified:
+        reports[stuid].append('Metadata says unmodified')
+    elif stat is Status.Boo:
+        reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
+
 
 writeout()
 
