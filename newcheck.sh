@@ -17,7 +17,6 @@ istempfile() {
     tempmsg=''
     local siz=$(stat -c%s "$1")
     local typ=$(file --brief "$1")
-    local nm=${1%%_*} 
     if ((siz<500)) && [[ $typ == "data" && $1 == *\~\$* ]]; then
         tempmsg="Temp file: $1"
     elif [[ $typ == "data" && $1 == *\~\$* ]]; then
@@ -74,7 +73,7 @@ done
 
 
 while IFS=$'\t' read fn cdate cstamp creatr mdate mstamp moddr; do
-    nm="${fn%%_*}"
+    namesid "$fn"
     msg1=0
     msg2=0
     if [[ $cstamp != $CSTAMP ]]; then
@@ -93,7 +92,7 @@ while IFS=$'\t' read fn cdate cstamp creatr mdate mstamp moddr; do
         msg2=1
         mdate="$RED$mdate$DEF"
     fi
-    if ! grep -q "^$nm.*"$'\t'"$moddr\("$'\t'"\|$\)" ../all-modder; then
+    if ! grep -q "^$curid.*"$'\t'"$moddr\("$'\t'"\|$\)" ../all-modder; then
         msg2=1
         cmoddr="$RED$moddr$DEF"
     else
@@ -116,7 +115,7 @@ while IFS=$'\t' read fn cdate cstamp creatr mdate mstamp moddr; do
                 msg+="Last modified on $mdate by $cmoddr"
             fi
         fi
-        reportline "$nm" "$msg"
+        reportline "$fn" "$msg"
     fi
 done < info
 
@@ -141,10 +140,11 @@ echo --------------------
 #exit
 
 for fn in *xlsx
-do nm="${fn%%_*}"
-    if [[ ! -e $nm.csv ]]; then
-#        echo "Converting $fn to $nm.csv"
-       ../xlsx2csv.py "$fn" "$nm.csv"
+do  namesid "$fn"
+    csvfile="${curname}_${curid}.csv"
+    if [[ ! -e $csvfile ]]; then
+#        echo "Converting $fn to $csvfile"
+       ../xlsx2csv.py "$fn" "$csvfile"
    fi
 done
 

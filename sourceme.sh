@@ -9,14 +9,14 @@ declare -a instructors
 if ! [[ -e grades ]]; then
     echo "No grades" >&2
 else
-while IFS=$'\t' read name grade; do
-    grades[$name]="$grade"
+while IFS=$'\t' read sid grade; do
+    grades[$sid]="$grade"
 done < grades
 fi
 
-while IFS=$'\t' read code name sec; do
-    stunames[$code]="$name"
-    stusec[$code]="$sec"
+while IFS=$'\t' read sid name sec; do
+    stunames[$sid]="$name"
+    stusec[$sid]="$sec"
 done < ../allnames
 
 
@@ -28,19 +28,26 @@ while IFS=$'\t' read name secs; do
     done
 done < ../instructor-sections
 
+namesid() {
+    local fn="$1"
+    curname="${fn%%_*}"
+    fn="${fn#*_}"
+    curid="${fn%%_*}"
+}
+
 reportline() {
-    nm="${1%%[._]*}"
+    namesid "$1"
     shift
-    if [[ -z "${stunames[$nm]:-}" ]]; then
-        echo "Can't find $nm"
-        echo "$nm $@"
+    if [[ -z "${stunames[$curid]:-}" ]]; then
+        echo "Can't find $curid"
+        echo "$curname $@"
         return
     fi
-    local sect="${stusec[$nm]}"
+    local sect="${stusec[$curid]}"
     local instr="${instsec[$sect]}"
-    local sname="${stunames[$nm]}"
-    local sgrad="${grades[$sname]}"
-    printf "%-20s %-4s %-26s" "$instr" "$sect" "$sname ($sgrad)"
+    local sname="${stunames[$curid]}"
+    local sgrad="${grades[$curid]}"
+    printf "%-20s %-4s %-26s " "$instr" "$sect" "$sname ($sgrad)"
     echo "$@"
     printf -v msg "%-4s %-26s" "$sect" "$sname ($sgrad)"
     reports[$sect]+="$msg $*"$'\n'
