@@ -16,8 +16,9 @@ from openpyxl import load_workbook
 
 from canvas import *
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
-from uniquecells import cleanval, CellCollector
 from allgrades import fetch_grades
+from wherelink import haslink, links_desc
+from uniquecells import cleanval, CellCollector
 from modderupdate import checkadd, Status, studict, fileinfo, writeout
 
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
@@ -212,6 +213,8 @@ for subfile in subfiles:
                 cellfiles[cval].append(filename)
             csvhashes[csvhash] += 1
             infos.append(theinfo)
+            if haslink(wb):
+                reports[stuid].append('Links to ' + links_desc(wb))
             wb.close()
             fdata.close()
 
