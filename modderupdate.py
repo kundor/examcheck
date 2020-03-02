@@ -208,19 +208,19 @@ if __name__ == '__main__':
         sys.exit(f'Directory {mdir} does not exist or does not contain info file')
 
     with open(ifile, 'rt') as inf:
-        oname = ''
+        osid = 0
         omodr = ''
         for line in inf:
             fields = line[:-1].split('\t')
             name, stuid, subid = fileinfo(fields[0])
             modder = fields[6]
-            if name == oname:
+            if stuid == osid:
                 if modder == omodr:
                     print(f'{name} seen a second time; same modder {omodr}')
                 else:
                     print(f'{name} seen a second time; different modder {modder} vs. {omodr}')
                 continue
-            oname = name
+            osid = stuid
             omodr = modder
             stat = checkadd(stuid, modder)
     writeout()
