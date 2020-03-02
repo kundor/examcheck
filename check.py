@@ -74,12 +74,11 @@ def xls2xlsx(zipp, filename):
             stdout=subprocess.DEVNULL)
     return open(filename + 'x', 'rb')
 
-def filesize(fdata):
-    try:
-        size = fdata.getbuffer().nbytes
-    except AttributeError:
-        size = os.fstat(fdata.fileno()).st_size
-    return size
+def filesize_mem(fdata):
+    return fdata.getbuffer().nbytes
+
+def filesize_fid(fid):
+    return os.fstat(fid.fileno()).st_size
 
 class BlakeHasher(RowVisitor):
     def __init__(self):
@@ -133,10 +132,10 @@ def report_nonxlsx(filename):
         return # no known student to report
     reports[stuid].append(f'Non-xlsx file: {filename}')
 
-def checktemp(filename, fdata):
+def checktemp(filename, fdata, size):
     stuid = fileinfo(filename).stuid
     badname = '~' in filename
-    small = filesize(fdata) < 500
+    small = size < 500
     if small and badname:
         reports[stuid].append('Temp file')
     elif badname:
@@ -179,9 +178,11 @@ for subfile in subfiles:
             if filename.endswith('.xlsx'):
                 fdata = io.BytesIO(subs.read(filename))
                 xlhash = bsum_mem(fdata)
+                size = filesize_mem(fdata)
             elif filename.endswith('.xls'):
                 fdata = xls2xlsx(subs, filename)
                 xlhash = bsum_fid(fdata)
+                size = filesize_fid(fdata)
             else:
                 report_nonxlsx(filename)
                 continue
@@ -201,12 +202,14 @@ for subfile in subfiles:
                     print('This one is identical to a previously seen file; ignoring.')
                     fdata.close()
                     continue
+            if size < 6000:
+                reports[stuid].append(f'Small file, {size} bytes')
             xlhashes[xlhash] += 1
             try:
                 wb = load_workbook(fdata, read_only=True)
             except BadZipFile as e:
                 print(filename, 'is not a zip file?', e, file=sys.stderr)
-                checktemp(filename, fdata)
+                checktemp(filename, fdata, size)
                 continue
             thecells, theinfo = process_workbook(xlhash, filename, wb)
             for cval in thecells - origcells:
