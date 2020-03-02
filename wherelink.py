@@ -23,11 +23,10 @@ def makenice(link):
     return link.file_link.Target.replace("file:///", "").replace("%20", " ")
 
 def linklist(workbook):
-    return [makenice(link) for link in wb._external_links)]
+    return [makenice(link) for link in wb._external_links]
 
 def links_desc(workbook):
-    links = [enquote(l) for l in wherelink(wb)]
-    return " and ".join(links)
+    return " and ".join(enquote(linklist(wb)))
 
 if __name__ == '__main__':
     wb = load_workbook(filename=sys.argv[1], read_only=True)
