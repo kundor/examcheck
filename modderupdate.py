@@ -182,6 +182,18 @@ def checkadd(sid, modder):
             return Status.Approved
     return stat
 
+def writeout(basename='allmod'):
+    n = 1
+    while True:
+        try:
+            with open(f'{basename}{n}', 'xt') as new:
+                for sid, mods in modders.items():
+                    new.write(f'{sid}\t' + '\t'.join(mods) + '\n')
+        except FileExistsError:
+            n += 1
+            continue
+        break
+
 if __name__ == '__main__':
     if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
         sys.exit('Must run in directory containing all-modder and students.json files')
@@ -211,7 +223,4 @@ if __name__ == '__main__':
             oname = name
             omodr = modder
             stat = checkadd(stuid, modder)
-
-    with open('allmod2', 'wt') as new:
-        for sid, mods in modders.items():
-            new.write(str(sid) + '\t' + '\t'.join(mods) + '\n')
+    writeout()
