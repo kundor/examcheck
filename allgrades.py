@@ -43,8 +43,7 @@ def stream_grades(session, quizid, seenscores={}):
 
 def print_grades(session, quizid):
     for sid, score in stream_grades(session, quizid):
-        stuname = studict[sid]
-        print(f"{stuname}\t{score}")
+        print(f"{sid}\t{score}")
 
 def all_grades(quizids):
     scores = {}
@@ -70,7 +69,7 @@ def load_grades(localfile):
     return thescores
 
 def fetch_grades(quizids, localfile='grades'):
-    if gradesfound(localfile):
+    if grades_found(localfile):
         print('Not fetching grades, using file {localfile}', file=sys.stderr)
         return load_grades(localfile)
     scores = {}
