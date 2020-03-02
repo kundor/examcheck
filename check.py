@@ -18,7 +18,7 @@ from canvas import *
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from uniquecells import cleanval, CellCollector
 from allgrades import fetch_grades
-from modderupdate import checkmodder, Status, modders, studict, fileinfo
+from modderupdate import checkadd, Status, studict, fileinfo, writeout
 
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
 
@@ -218,17 +218,14 @@ for subfile in subfiles:
 for info in infos:
     # Update modder names afterward, so the long conversion process isn't held up by prompts
     codename, stuid, subid = fileinfo(filename)
-    stat = checkmodder(stuid, info.modder)
+    stat = checkadd(stuid, info.modder)
     # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
     if stat is Status.DNE:
         continue
     stu = studict[stuid]
-    if stat is Status.Approved:
-        modders[stuid].append(modder)
-    elif stat is Status.Unknown:
-        addit = input(f"User {stu['name']}: modder '{info.modder}'. Add? ")
-        if addit.lower() in {'y', 'yes'}:
-            modders[stuid].append(info.modder)
+    if stat is Status.Unknown:
+        reports[stuid].append(f'Last modified by {info.modder}')
 
+writeout()
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
