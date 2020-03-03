@@ -1,6 +1,7 @@
 *
 !*.*
 *.csv
+*.db
 *.json
 *.swp
 *.kate-swp
