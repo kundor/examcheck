@@ -8,7 +8,7 @@ from zipfile import ZipFile, BadZipFile
 from datetime import datetime
 from contextlib import closing
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+import dataclasses as dc
 
 import simhash
 import IPython
@@ -25,7 +25,7 @@ USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux')
 
-@dataclass
+@dc.dataclass
 class Info:
     filename: str
     creation: datetime
@@ -35,6 +35,9 @@ class Info:
     xlhash: str
     csvhash: str
     simhash: int
+
+    asdict = dc.asdict
+    replace = dc.replace
 
 def get_args(argv=sys.argv):
     if len(argv) <= 2:
@@ -168,7 +171,7 @@ cellfiles = defaultdict(list) # map cell_content : files
 infos = []
 grades = fetch_grades(quizids) # map student_id : score
 stuids = Counter()
-xlhashes = Counter()
+xlhashes = {}
 csvhashes = Counter()
 reports = defaultdict(list) # map stuid : strings
 
@@ -202,12 +205,17 @@ for subfile in subfiles:
                     infos.remove(prev[0])
                     print(f'Removing unmodified file {prev[0].filename}')
                 elif any(p.xlhash == xlhash for p in prev):
-                    print('This one is identical to a previously seen file; ignoring.')
+                    print('This one is identical to a previously seen file for this student; ignoring.')
                     fdata.close()
                     continue
+            if xlhash in xlhashes:
+                prev = xlhashes[xlhash]
+                print(f'File {filename} identical to previously seen file {prev.filename}')
+                infos.append(prev.replace(filename=filename))
+                fdata.close()
+                continue
             if size < 6000:
                 reports[stuid].append(f'Small file, {size} bytes')
-            xlhashes[xlhash] += 1
             try:
                 wb = load_workbook(fdata, read_only=True)
             except BadZipFile as e:
@@ -219,6 +227,7 @@ for subfile in subfiles:
                 cellfiles[cval].append(filename)
             csvhashes[theinfo.csvhash] += 1
             infos.append(theinfo)
+            xlhashes[xlhash] = theinfo
             if haslink(wb):
                 reports[stuid].append('Links to ' + links_desc(wb))
             wb.close()
