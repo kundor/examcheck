@@ -31,7 +31,7 @@ schema = {
             'id': 'INTEGER PRIMARY KEY',
             'quiz_id': 'INTEGER',
             'name': 'TEXT',
-            'group': 'INTEGER REFERENCES assignment_groups (id)',
+            'agroup': 'INTEGER REFERENCES assignment_groups (id)',
             'date': 'DATE',
             'due_at': 'DATE',
             'unlock_at': 'DATE',
@@ -46,6 +46,13 @@ schema = {
             'score': 'INTEGER'}
         }
 
-conn = sqlite3.connect('coursedata.db')
-c = conn.cursor()
+def create_tables(cursor):
+    for table, fields in schema.items():
+        cols = ', '.join(f'{field} {typ}' for field, typ in fields.items())
+        cursor.execute(f'CREATE TABLE {table} ({cols})')
+
+with sqlite3.connect('coursedata.db') as conn:
+    c = conn.cursor()
+    create_tables(c)
+    conn.commit()
 
