@@ -35,7 +35,7 @@ istempfile() {
     [[ -n $tempmsg ]] # return value
 }
 
-ls *.xls* | sed 's/_.*//' | uniq -cd
+ls *.xls* | sed -E 's/[^_]*_([^_]*)_.*/\1/' | uniq -cd
 
 for f in *xls; do
     if [[ $(file -b --mime-type "$f") == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ]]; then
