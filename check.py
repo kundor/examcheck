@@ -68,10 +68,13 @@ def bsum_mem(bytio):
     return blakesum(bytio.getbuffer())
 
 def xls2xlsx(zipp, filename):
-    print(f'Converting {filename} to xlsx', file=sys.stderr)
-    zipp.extract(filename)
-    subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename],
-            stdout=subprocess.DEVNULL)
+    if os.path.exists(filename + 'x'):
+        print(f'{filename}x found', file=sys.stderr)
+    else:
+        print(f'Converting {filename} to xlsx', file=sys.stderr)
+        zipp.extract(filename)
+        subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename],
+                stdout=subprocess.DEVNULL)
     return open(filename + 'x', 'rb')
 
 def filesize_mem(fdata):
