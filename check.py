@@ -241,6 +241,6 @@ for info in infos:
     elif stat is Status.Boo:
         reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
 writeout()
-pairs = simhash.find_all([i.simhash for i in infos], blocks=6, maxdist=4) # blocks >= maxdist + 1; maxdist 1 to 64
+pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
