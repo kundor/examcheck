@@ -70,7 +70,7 @@ def load_grades(localfile):
 
 def fetch_grades(quizids, localfile='grades'):
     if grades_found(localfile):
-        print('Not fetching grades, using file {localfile}', file=sys.stderr)
+        print(f'Not fetching grades, using file {localfile}', file=sys.stderr)
         return load_grades(localfile)
     scores = {}
     with open(localfile, 'wt') as fid, canvas_session() as session:
