@@ -108,7 +108,7 @@ class SimHasher(RowVisitor):
         return simhash.compute(self.hashvector)
 
 def process_workbook(xlhash, filename, workbook):
-    cells, csvhash, simhash = process_cells(workbook, [CellCollector(), BlakeHasher(), SimHasher()]
+    cells, csvhash, simhash = process_cells(workbook, [CellCollector(), BlakeHasher(), SimHasher()])
     return cells, Info(filename,
                 workbook.properties.created,
                 workbook.properties.creator,
@@ -214,7 +214,7 @@ for subfile in subfiles:
             thecells, theinfo = process_workbook(xlhash, filename, wb)
             for cval in thecells - origcells:
                 cellfiles[cval].append(filename)
-            csvhashes[csvhash] += 1
+            csvhashes[theinfo.csvhash] += 1
             infos.append(theinfo)
             if haslink(wb):
                 reports[stuid].append('Links to ' + links_desc(wb))
