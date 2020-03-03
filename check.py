@@ -237,8 +237,7 @@ for info in infos:
         reports[stuid].append('Metadata says unmodified')
     elif stat is Status.Boo:
         reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
-
-
 writeout()
+pairs = simhash.find_all([i.simhash for i in infos], blocks=6, maxdist=4) # blocks >= maxdist + 1; maxdist 1 to 64
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
