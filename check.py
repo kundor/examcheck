@@ -223,7 +223,7 @@ for subfile in subfiles:
 
 for info in infos:
     # Update modder names afterward, so the long conversion process isn't held up by prompts
-    codename, stuid, subid = fileinfo(filename)
+    codename, stuid, subid = fileinfo(info.filename)
     stat = checkadd(stuid, info.modder)
     # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
     if stat is Status.DNE:
