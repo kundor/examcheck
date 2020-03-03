@@ -13,7 +13,7 @@ schema = {
             'teacher': 'INTEGER REFERENCES teachers (id)',
             'full_name': 'TEXT',
             'short_name': 'CHAR(4)',
-            'time': 'TIME'},
+            'time': 'TIME'}, # null : not known
         'students': {
             'id': 'INTEGER PRIMARY KEY',
             'sisid': 'INTEGER',
@@ -26,16 +26,16 @@ schema = {
         'assignment_groups': {
             'id': 'INTEGER PRIMARY KEY',
             'name': 'TEXT',
-            'type': 'INTEGER'},
+            'type': 'INTEGER'}, # enum: 0: whatever, 1: exam, 2: alt exam, 3: final exam, 4: upload
         'exams': {
             'id': 'INTEGER PRIMARY KEY',
             'quiz_id': 'INTEGER',
             'name': 'TEXT',
             'agroup': 'INTEGER REFERENCES assignment_groups (id)',
             'date': 'DATE',
-            'due_at': 'DATE',
-            'unlock_at': 'DATE',
-            'lock_at': 'DATE'},
+            'due_at': 'DATE', # Do I want these?
+            'unlock_at': 'DATE', # ?
+            'lock_at': 'DATE'}, # ?
         'uploads': {
             'id': 'INTEGER PRIMARY KEY',
             'name': 'TEXT',
