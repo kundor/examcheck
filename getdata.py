@@ -7,10 +7,9 @@ from canvas import *
 from textwrap import TextWrapper
 from shutil import get_terminal_size
 from operator import itemgetter
-from traitlets.config import get_config
 import icdiff
 
-sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
+sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux')
 
 def too_old(oldstamp, newstamp):
     return newstamp - oldstamp > 4*30*24*60*60 # 4 months
@@ -422,6 +421,4 @@ if __name__ == '__main__':
     else:
         print('Not making all-modder. (`cut -f -2 allnames > all-modder` has same effect)')
 
-    c = get_config()
-    c.InteractiveShellEmbed.colors = "Linux"
-    IPython.embed(config=c)
+    IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())

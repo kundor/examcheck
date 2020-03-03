@@ -23,7 +23,7 @@ from modderupdate import checkadd, Status, studict, fileinfo, writeout
 
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
 
-sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
+sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux')
 
 @dataclass
 class Info:
