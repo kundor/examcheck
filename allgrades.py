@@ -8,11 +8,9 @@ def stream_grades(session, quizid, seenscores={}):
     # Passing the same seenscores dict for multiple invocations will update the scores
     # The default seenscores, with no third argument, persists across all such invocations
     # (So if you use this for non-equivalent assignments, you must pass a score dict)
-    curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
-    while curl:
-        with session.get(curl) as response:
-            subs = response.json()['quiz_submissions']
-            curl = response.links['next']['url'] if 'next' in response.links else None
+    curl = f'courses/{courseid}/quizzes/{quizid}/submissions'
+    for json in follow_next(session, curl):
+        subs = json['quiz_submissions']
         for sub in subs:
             if 'user_id' not in sub:
                 print('What kinda submission is this, with no user_id?', sub, file=sys.stderr)

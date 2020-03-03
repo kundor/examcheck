@@ -277,13 +277,9 @@ def format_sections(sections):
     return sectiondat
 
 def get_enrolled(session, enroll_type):
-    curl = canvasbase + f'courses/{courseid}/users'
-    enrolled = []
-    while curl:
-        with session.get(curl, params={'include[]': 'enrollments', 'enrollment_type[]': enroll_type}) as response:
-            enrolled += response.json()
-            curl = response.links.get('next', {}).get('url')
-    return enrolled
+    curl = f'courses/{courseid}/users'
+    params = {'include[]': 'enrollments', 'enrollment_type[]': enroll_type}
+    return sum(follow_next(session, curl, params=params), [])
 
 def get_assignments(session, groupid):
     curl = canvasbase + f'courses/{courseid}/assignment_groups/{groupid}'

@@ -27,6 +27,14 @@ def canvas_session():
     s.params = {'per_page': 100}
     return s
 
+def follow_next(session, curl, **kwargs):
+    if not curl.startswith('http'):
+        curl = canvasbase + curl
+    while curl:
+        with session.get(curl, **kwargs) as response:
+            curl = response.links.get('next', {}).get('url')
+            yield response.json()
+
 def deferint(signum, frame):
     if deferint.nomore:
         print("Killing with fire")
