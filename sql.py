@@ -46,15 +46,14 @@ schema = {
             'score': 'INTEGER'}
         }
 
-def create_tables(cursor):
-    for table, fields in schema.items():
-        cols = ', '.join(f'{field} {typ}' for field, typ in fields.items())
-        cursor.execute(f'CREATE TABLE {table} ({cols})')
+def create_tables(conn):
+    with conn: # commits or rolls back
+        for table, fields in schema.items():
+            cols = ', '.join(f'{field} {typ}' for field, typ in fields.items())
+            conn.execute(f'CREATE TABLE {table} ({cols})')
 
 conn = sqlite3.connect('coursedata.db')
-c = conn.cursor()
-c.execute('PRAGMA foreign_keys=ON')
-create_tables(c)
-conn.commit()
+conn.execute('PRAGMA foreign_keys=ON')
+create_tables(conn)
 conn.close()
 
