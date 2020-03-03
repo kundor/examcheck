@@ -51,8 +51,10 @@ def create_tables(cursor):
         cols = ', '.join(f'{field} {typ}' for field, typ in fields.items())
         cursor.execute(f'CREATE TABLE {table} ({cols})')
 
-with sqlite3.connect('coursedata.db') as conn:
-    c = conn.cursor()
-    create_tables(c)
-    conn.commit()
+conn = sqlite3.connect('coursedata.db')
+c = conn.cursor()
+c.execute('PRAGMA foreign_keys=ON')
+create_tables(c)
+conn.commit()
+conn.close()
 
