@@ -155,8 +155,8 @@ def pop_print_report(stu):
     secname = stu['section']
     stuid = stu['id']
     score = grades[stuid]
-    sname = stu['name']
-    print(f'{secname:4} {sname:26} ({grade:2})' + ', '.join(reports.pop(stuid)))
+    namegrad = f"{stu['name']} ({grade})"
+    print(f'{secname:4} {namegrad:26} ' + ', '.join(reports.pop(stuid)))
 
 def dumb_lastname(tch):
     return tch['name'].split()[1]
