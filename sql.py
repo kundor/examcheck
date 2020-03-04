@@ -52,6 +52,9 @@ def create_tables(conn):
             cols = ', '.join(f'{field} {typ}' for field, typ in fields.items())
             conn.execute(f'CREATE TABLE {table} ({cols})')
 
+def list_tables(conn):
+    return [t[0] for t in conn.execute('SELECT name FROM sqlite_master WHERE type = "table"')]
+
 conn = sqlite3.connect('coursedata.db')
 conn.execute('PRAGMA foreign_keys=ON')
 create_tables(conn)
