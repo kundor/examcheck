@@ -50,16 +50,41 @@ def alphaonly(string):
 def codename(student):
     return alphaonly(student['sortable_name'].lower())
 
-def todays_assigns(filename):
-    """Return exam IDs of given type (id or quiz_id) for today"""
-    exams = load_file(filename, json.load)
+def yesno(prompt):
+    answer = input(prompt)
+    return answer.lower() in {'y', 'yes'}
+
+def dated_assigns(filename):
+    assigns = load_file(filename, json.load)
+    assigns = [a for a in assigns if a['date']]
+    for a in assigns:
+        a['date'] = isoparse(a['date']).date()
+    return assigns
+
+def todays_assigns(filename, today=None):
+    if today is None:
+        today = date.today()
+    return [e for e in dated_assigns(filename) if e['date'] == today]
+
+def most_recent(filename):
     today = date.today()
-    return [e for e in exams if e['date'] and isoparse(e['date']).date() == today]
+    past_assigns = [e for e in dated_assigns(filename) if e['date'] <= today]
+    if not past_assigns:
+        return
+    mintime = min(today - e['date'] for e in past_assigns)
+    return [e for e in past_assigns if today - e['date'] == mintime]
+
+def listnames(seq):
+    return ', '.join(s['name'] for s in seq)
 
 def todays_ids(idtype):
+    """Return exam IDs of given type (id or quiz_id) for today"""
     theexams = todays_assigns('exams.json')
     if theexams:
-       print('Using assignments ' + ', '.join(e['name'] for e in theexams), file=sys.stderr)
+       print('Using assignments ' + listnames(theexams), file=sys.stderr)
+       return [e[idtype] for e in theexams]
+   theexams = most_recent('exams.json')
+   if theexams and yesno(f'Use assignments {listnames(theexams)} from {theexams[0]["date"]}? '):
        return [e[idtype] for e in theexams]
 
 def get_fid(filename):

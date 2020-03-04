@@ -35,8 +35,7 @@ def ask_wipe():
     now = time.time()
     newest = max(os.path.getmtime(info) for info in info_files)
     if too_old(newest, now) or semester_break(newest, now):
-        ans = input('It might be a new semester. Wipe data and start fresh? ')
-        if ans.lower() in {'y', 'yes'}:
+        if yesno('It might be a new semester. Wipe data and start fresh? ')
             for info in info_files:
                 os.remove(info)
         else:
@@ -410,7 +409,7 @@ if __name__ == '__main__':
     instsecstr = '\n'.join(tch['name'] + '\t' + '\t'.join(tch['sections']) for tch in instsec) + '\n'
     diffwrite('instructor-sections', instsec, instsecstr, loader=TabLoader('name', 'sections', varlength=True))
 
-    if input('Create all-modder with full names? ').casefold() in {'y', 'yes'}:
+    if yesno('Create all-modder with full names? '):
         with open('all-modder', 'wt') as fid:
             for stu in studentinf:
                 fid.write(stu['id'] + '\t' + stu['name'] + '\n')

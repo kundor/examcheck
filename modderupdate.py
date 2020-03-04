@@ -4,7 +4,7 @@ import os
 import re
 from enum import Enum
 from collections import namedtuple
-from canvas import codename, students, alphaonly, load_file
+from canvas import codename, students, alphaonly, load_file, yesno
 
 Status = Enum('Status', ('Found', 'Approved', 'DNE', 'Boo', 'Unknown'))
 FileInfo = namedtuple('FileInfo', ('codename', 'stuid', 'subid'))
@@ -176,8 +176,7 @@ def checkadd(sid, modder):
         modders[sid].append(modder)
     elif stat is Status.Unknown:
         stuname = studict[sid]['name'] 
-        addit = input(f'User {stuname}: modder {modder}. Add? ')
-        if addit.lower() in {'y', 'yes'}:
+        if yesno(f'User {stuname}: modder {modder}. Add? ')
             modders[sid].append(modder)
             return Status.Approved
     return stat
