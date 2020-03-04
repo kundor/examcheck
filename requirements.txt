@@ -1,0 +1,10 @@
+Python >= 3.7 # dataclasses
+colorama
+dateutil
+icdiff
+ipython
+keyring
+openpyxl
+python-igraph
+requests
+simhash-py
