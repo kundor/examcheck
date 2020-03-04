@@ -3,12 +3,12 @@
 import io
 import mmap
 import subprocess
+import dataclasses as dc
 from hashlib import blake2b
 from zipfile import ZipFile, BadZipFile
 from datetime import datetime
 from contextlib import closing
 from collections import Counter, defaultdict
-import dataclasses as dc
 
 import simhash
 import IPython
@@ -151,6 +151,33 @@ def checktemp(filename, fdata, size):
     else:
         reports[stuid].append(f'Not an Excel file? {filename}')
 
+def pop_print_report(stu):
+    secname = stu['section']
+    stuid = stu['id']
+    score = grades[stuid]
+    sname = stu['name']
+    print(f'{secname:4} {sname:26} ({grade:2})' + ', '.join(reports.pop(stuid)))
+
+def dumb_lastname(tch):
+    return tch['name'].split()[1]
+
+def sorted_teachers():
+    return sorted(teachers, key=dumb_lastname)
+
+def print_reports():
+    for tch in sorted_teacher():
+        print(tch['name'])
+        for sec in sorted([sec[1] for sec in tch['sections']]):
+            for stuid in reports:
+                stu = studict[stuid]
+                if stu['section'] == sec:
+                    pop_print_report(stu)
+            print()
+    if reports:
+        print('Leftovers?!')
+        for stuid in reports:
+            pop_print_report(studict[stuid])
+
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
 # However, it only gives an HTML page with authentication error :(
@@ -165,6 +192,7 @@ def checktemp(filename, fdata, size):
 
 quizids, subfiles, origfile = get_args()
 
+teachers = load_file('teachers.json', json.load)
 origcells, originfo = process_file(origfile)
 
 cellfiles = defaultdict(list) # map cell_content : files
