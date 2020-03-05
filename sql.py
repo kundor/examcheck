@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sqlite3
+import datetime as dt
 
 schema = {
         'teachers': {
@@ -45,17 +46,26 @@ schema = {
             'exam': 'INTEGER REFERENCES exams (id)',
             'score': 'INTEGER'}
         }
+# type DATE is automatically parsed as a datetime.date
+# need to register TIME
+def fromisoformat(byts):
+    return dt.time.fromisoformat(byts.decode())
+
+sqlite3.register_adapter(dt.time, dt.time.isoformat)
+sqlite3.register_converter("TIME", fromisoformat)
 
 def create_tables(conn):
+    tabls = list_tables(conn)
     with conn: # commits or rolls back
         for table, fields in schema.items():
-            cols = ', '.join(f'{field} {typ}' for field, typ in fields.items())
-            conn.execute(f'CREATE TABLE {table} ({cols})')
+            if table not in tabls:
+                cols = ', '.join(f'{field} {typ}' for field, typ in fields.items())
+                conn.execute(f'CREATE TABLE {table} ({cols})')
 
 def list_tables(conn):
     return [t[0] for t in conn.execute('SELECT name FROM sqlite_master WHERE type = "table"')]
 
-conn = sqlite3.connect('coursedata.db')
+conn = sqlite3.connect('coursedata.db', detect_types=sqlite3.PARSE_DECLTYPES)
 conn.execute('PRAGMA foreign_keys=ON')
 create_tables(conn)
 conn.close()
