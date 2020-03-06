@@ -70,14 +70,22 @@ def bsum_fid(fid):
 def bsum_mem(bytio):
     return blakesum(bytio.getbuffer())
 
+def get_mime(filename):
+    result = subprocess.run(['file', '-b', '--mime-type', filename], capture_output=True)
+    return result.stdout.decode().rstrip()
+
 def xls2xlsx(zipp, filename):
     if os.path.exists(filename + 'x'):
         print(f'{filename}x found', file=sys.stderr)
     else:
         print(f'Converting {filename} to xlsx', file=sys.stderr)
         zipp.extract(filename)
-        subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename],
-                stdout=subprocess.DEVNULL)
+        if get_mime(filename) == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            print("Appears to be misnamed .xlsx file", file=sys.stderr)
+            os.rename(filename, filename + 'x')
+        else:
+            subprocess.run(['libreoffice', '--headless', '--convert-to', 'xlsx', filename],
+                    stdout=subprocess.DEVNULL)
     return open(filename + 'x', 'rb')
 
 def filesize_mem(fdata):
