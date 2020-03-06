@@ -281,3 +281,10 @@ writeout()
 pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
+
+# Make command interpreter (import cmd)
+# <stu> is codename with tab-completion, or stuid
+# report <stu> [message]
+# get <stu> -- downloads and converts to CSV
+# open <stu> -- gets if necessary, opens in libreoffice
+# diff <stu1> <stu2> -- opens icdiff of CSVs in a pager
