@@ -50,7 +50,7 @@ def get_args(argv=sys.argv):
         quizids.append(int(argv[arg]))
         arg += 1
     if not quizids:
-        quizids = todays_ids('quiz_id')
+        exams = todays_exams('quiz_id')
     if not quizids:
         sys.exit('Could not find any quiz IDs. ' + USAGE)
     subfiles = []
