@@ -81,11 +81,11 @@ def todays_ids(idtype):
     """Return exam IDs of given type (id or quiz_id) for today"""
     theexams = todays_assigns('exams.json')
     if theexams:
-       print('Using assignments ' + listnames(theexams), file=sys.stderr)
-       return [e[idtype] for e in theexams]
-   theexams = most_recent('exams.json')
-   if theexams and yesno(f'Use assignments {listnames(theexams)} from {theexams[0]["date"]}? '):
-       return [e[idtype] for e in theexams]
+        print('Using assignments ' + listnames(theexams), file=sys.stderr)
+        return [e[idtype] for e in theexams]
+    theexams = most_recent('exams.json')
+    if theexams and yesno(f'Use assignments {listnames(theexams)} from {theexams[0]["date"]}? '):
+        return [e[idtype] for e in theexams]
 
 def get_fid(filename):
     """Try to open a file in the current directory, parent directory, or this file's location."""
