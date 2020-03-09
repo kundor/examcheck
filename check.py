@@ -51,6 +51,7 @@ def get_args(argv=sys.argv):
         arg += 1
     if not quizids:
         exams = todays_exams('quiz_id')
+        quizids = [e['quiz_id'] for e in exams]
     if not quizids:
         sys.exit('Could not find any quiz IDs. ' + USAGE)
     subfiles = []
@@ -59,8 +60,9 @@ def get_args(argv=sys.argv):
     else:
         subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
     origfile = argv[-1]
+    modnum = ''.join(filter(str.isdigit, exams[0]['name']
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
-    return quizids, subfiles, origfile
+    return quizids, subfiles, origfile, modnum
 
 def blakesum(buf):
     bsum = blake2b(buf, digest_size=24)
@@ -193,6 +195,13 @@ def inbasedir():
     curdir = os.path.abspath(os.path.curdir)
     return curdir == basedir
 
+def changetodir(dirname):
+    os.makedirs(dirname, exist_ok=True)
+    os.chdir(dirname)
+
+def inemptydir():
+    return not os.listdir()
+
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
 # However, it only gives an HTML page with authentication error :(
@@ -205,7 +214,16 @@ def inbasedir():
 # I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
 # also re-download uniquecell cluster members.
 
-quizids, subfiles, origfile = get_args()
+quizids, subfiles, origfile, modnum = get_args()
+
+if inbasedir():
+    mdir = 'mod' + modnum
+    changetodir(mdir)
+    print('Using directory ' + mdir, file=sys.stderr)
+
+if not inemptydir():
+    if not yesno('Directory is not empty. Proceed (may clobber files)? '):
+        sys.exit('Aborted.')
 
 teachers = load_file('teachers.json', json.load)
 origcells, originfo = process_file(origfile)
