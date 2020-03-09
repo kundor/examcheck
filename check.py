@@ -5,6 +5,7 @@ import mmap
 import subprocess
 import dataclasses as dc
 from hashlib import blake2b
+from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 from datetime import datetime, timedelta
 from contextlib import closing
@@ -186,6 +187,11 @@ def print_reports():
         print('Leftovers?!')
         for stuid in reports:
             pop_print_report(studict[stuid])
+
+def inbasedir():
+    basedir = Path(__file__).parent.resolve()
+    curdir = os.path.abspath(os.path.curdir)
+    return curdir == basedir
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
