@@ -6,12 +6,13 @@ import subprocess
 import dataclasses as dc
 from hashlib import blake2b
 from zipfile import ZipFile, BadZipFile
-from datetime import datetime
+from datetime import datetime, timedelta
 from contextlib import closing
 from collections import Counter, defaultdict
 
 import simhash
 import IPython
+from colorama import Fore
 from openpyxl import load_workbook
 
 from canvas import *
@@ -211,6 +212,8 @@ xlhashes = {}
 csvhashes = Counter()
 reports = defaultdict(list) # map stuid : strings
 
+now = datetime.now()
+
 warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
 warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
 
@@ -272,21 +275,45 @@ for subfile in subfiles:
 for info in infos:
     # Update modder names afterward, so the long conversion process isn't held up by prompts
     codename, stuid, subid = fileinfo(info.filename)
+    docreatmsg = False
+    creatmsg = 'Created'
+    if info.creator != originfo.creator:
+        docreatmsg = True
+        creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
+    if info.creation != originfo.creation:
+        docreatmsg = True
+        creatmsg += ' on ' + Fore.RED + f'{info.creation}' + Fore.RESET
+    if docreatmsg:
+        reports[stuid].append(creatmsg)
+
+    domodmsg = False
+    modmsg = 'Last modified'
     stat = checkadd(stuid, info.modder)
     # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
     if stat is Status.DNE:
         continue
     stu = studict[stuid]
     if stat is Status.Unknown:
-        reports[stuid].append(f'Last modified by {info.modder}')
+        domodmsg = True
+        modmsg += ' by ' + Fore.RED + info.modder + Fore.RESET
     elif stat is Status.Boo and info.xlhash == originfo.xlhash:
         reports[stuid].append('Unmodified')
     elif stat is Status.Boo and info.modified == originfo.modified:
         reports[stuid].append('Metadata says unmodified')
     elif stat is Status.Boo:
         reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
+    if info.modified > now or info.modified < now - timedelta(days=9) and stat is not Status.Boo:
+        if not domodmsg:
+            modmsg += ' by ' + info.modder
+        modmsg += ' on ' + Fore.RED + f'{info.modified}' + Fore.RESET
+        domodmsg = True
+    if domodmsg:
+        reports[stuid].append(modmsg)
+
+
 writeout()
 pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
+print_reports()
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
 
