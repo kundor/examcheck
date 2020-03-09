@@ -315,6 +315,11 @@ writeout()
 pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
 print_reports()
 
+for chash, count in csvhashes.most_common():
+    if count <= 1:
+        break
+    print('Identical CSV: ' + ', '.join(i.filename for i in infos if i.csvhash == chash))
+
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
 
 # Make command interpreter (import cmd)
