@@ -19,7 +19,7 @@ from canvas import *
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from allgrades import fetch_grades
 from wherelink import haslink, links_desc
-from uniquecells import cleanval, CellCollector
+from uniquecells import cleanval, CellCollector, filerpts, pairs_few, most_shared
 from modderupdate import checkadd, Status, studict, fileinfo, writeout
 
 USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
@@ -319,6 +319,10 @@ for chash, count in csvhashes.most_common():
     if count <= 1:
         break
     print('Identical CSV: ' + ', '.join(i.filename for i in infos if i.csvhash == chash))
+
+rpts = filerpts(cellfiles)
+most_shared(rpts, cellfiles)
+pairs_few(rpts, cellfiles)
 
 IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
 
