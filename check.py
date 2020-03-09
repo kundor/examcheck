@@ -52,6 +52,9 @@ def get_args(argv=sys.argv):
     if not quizids:
         exams = todays_exams('quiz_id')
         quizids = [e['quiz_id'] for e in exams]
+    else:
+        exams = dated_assigns('exams.json')
+        exams = [ex for ex in exams if ex['quiz_id'] in quizids]
     if not quizids:
         sys.exit('Could not find any quiz IDs. ' + USAGE)
     subfiles = []
@@ -62,7 +65,7 @@ def get_args(argv=sys.argv):
     origfile = argv[-1]
     modnum = ''.join(filter(str.isdigit, exams[0]['name']
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
-    return quizids, subfiles, origfile, modnum
+    return exams, subfiles, origfile
 
 def blakesum(buf):
     bsum = blake2b(buf, digest_size=24)
@@ -214,10 +217,10 @@ def inemptydir():
 # I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
 # also re-download uniquecell cluster members.
 
-quizids, subfiles, origfile, modnum = get_args()
+exams, subfiles, origfile = get_args()
 
 if inbasedir():
-    mdir = 'mod' + modnum
+    mdir = 'mod' + ''.join(filter(str.isdigit, exams[0]['name']
     changetodir(mdir)
     print('Using directory ' + mdir, file=sys.stderr)
 
@@ -230,7 +233,7 @@ origcells, originfo = process_file(origfile)
 
 cellfiles = defaultdict(list) # map cell_content : files
 infos = []
-grades = fetch_grades(quizids) # map student_id : score
+grades = fetch_grades([ex['quiz_id'] for ex in exams]) # map student_id : score
 stuids = Counter()
 xlhashes = {}
 csvhashes = Counter()
