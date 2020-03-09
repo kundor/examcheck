@@ -352,6 +352,11 @@ for chash, count in csvhashes.most_common():
         break
     print('Identical CSV: ' + ', '.join(i.filename for i in infos if i.csvhash == chash))
 
+for shash, count in Counter(i.simhash for i in infos).most_common():
+    if count <= 1:
+        break
+    print('Identical simhash: ' + ', '.join(i.filename for i in infos if i.simhash == shahs))
+
 rpts = filerpts(cellfiles)
 most_shared(rpts, cellfiles)
 pairs_few(rpts, cellfiles)
