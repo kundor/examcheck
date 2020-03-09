@@ -282,7 +282,10 @@ for info in infos:
         creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
     if info.creation != originfo.creation:
         docreatmsg = True
-        creatmsg += ' on ' + Fore.RED + f'{info.creation}' + Fore.RESET
+        if abs(info.creation - originfo.creation) < timedelta(days=1):
+            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x %X}' + Fore.RESET
+        else:
+            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x}' + Fore.RESET
     if docreatmsg:
         reports[stuid].append(creatmsg)
 
@@ -305,7 +308,7 @@ for info in infos:
     if info.modified > now or info.modified < now - timedelta(days=9) and stat is not Status.Boo:
         if not domodmsg:
             modmsg += ' by ' + info.modder
-        modmsg += ' on ' + Fore.RED + f'{info.modified}' + Fore.RESET
+        modmsg += ' on ' + Fore.RED + f'{info.modified:%x}' + Fore.RESET
         domodmsg = True
     if domodmsg:
         reports[stuid].append(modmsg)
