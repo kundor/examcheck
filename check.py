@@ -239,7 +239,9 @@ xlhashes = {}
 csvhashes = Counter()
 reports = defaultdict(list) # map stuid : strings
 
-now = datetime.now()
+examtime = datetime.combine(exams[0]['date'], Time(17)) # 5 pm
+if len({ex['date'] for ex in exams}) > 1:
+    print(f'Warning: exams on different dates. Using first exam {exams[0]["date"]}', file=sys.stderr)
 
 warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
 warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
@@ -332,7 +334,7 @@ for info in infos:
         reports[stuid].append('Metadata says unmodified')
     elif stat is Status.Boo:
         reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
-    if info.modified > now or info.modified < now - timedelta(days=9) and stat is not Status.Boo:
+    if info.modified > examtime or info.modified < examtime - timedelta(days=9) and stat is not Status.Boo:
         if not domodmsg:
             modmsg += ' by ' + info.modder
         modmsg += ' on ' + Fore.RED + f'{info.modified:%x}' + Fore.RESET
