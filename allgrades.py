@@ -37,7 +37,7 @@ def stream_grades(session, quizid, seenscores={}):
                 if thescore < seenscores[sid]:
                     continue # keep max score in dictionary and output
             yield sid, round(thescore)
-            seenscores[sid] = round(thescore)
+            seenscores[sid] = thescore
 
 def print_grades(session, quizid):
     for sid, score in stream_grades(session, quizid):
