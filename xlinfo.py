@@ -107,14 +107,15 @@ def xml_props(ooxml, filename=None):
                 timeform(tags, 'modified'),
                 tagval(tags, 'lastModifiedBy'))
 
-def workbook_props(wb, filename):
+def workbook_props(wb, filename, *args):
     """Get Info properties from open openpyxl workbook"""
     # slow; worth it if we're already loading them (to convert to csv)
     return Info(filename,
               wb.properties.created,
               wb.properties.creator,
               wb.properties.modified,
-              wb.properties.last_modified_by or '\u2205')
+              wb.properties.last_modified_by or '\u2205',
+              *args)
 
 def writeallinfos(files, outfile='info'):
     with open(outfile, 'xt') as out:

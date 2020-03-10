@@ -15,7 +15,7 @@ from colorama import Fore
 from openpyxl import load_workbook
 
 from canvas import *
-from xlinfo import Info, filesinzips
+from xlinfo import filesinzips, workbook_props
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from allgrades import fetch_grades
 from wherelink import haslink, links_desc
@@ -135,14 +135,8 @@ class SimHasher(RowVisitor):
 
 def process_workbook(xlhash, filename, workbook):
     cells, csvhash, simhash = process_cells(workbook, [CellCollector(), BlakeHasher(), SimHasher()])
-    return cells, Info(filename,
-                workbook.properties.created,
-                workbook.properties.creator,
-                workbook.properties.modified,
-                workbook.properties.last_modified_by or '\u2205',
-                xlhash,
-                csvhash,
-                simhash)
+    info = workbook_props(workbook, filename, xlhash, csvhash, simhash)
+    return cells, info
 
 def process_file(filename):
     with open(filename, 'rb') as fid:
