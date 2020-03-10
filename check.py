@@ -60,11 +60,9 @@ def get_args(argv=sys.argv):
     else:
         globfiles = Path.('~/Downloads').expanduser().glob('submissions*.zip')
         for sf in globfiles:
-            base = os.path.split(sf)[1]
-            nums = numsonly(base)
-            if nums:
-                if nums != modnum:
-                    continue
+            nums = numsonly(sf.stem)
+            if nums and nums != modnum:
+                continue
             subfiles.append(sf)
         if not subfiles or not yesno(f'Using files {subfiles}. OK? '):
             sys.exit('Please specify downloaded submissions zip')
@@ -189,7 +187,7 @@ def sorted_teachers():
     return sorted(teachers, key=dumb_lastname)
 
 def print_reports():
-    for tch in sorted_teacher():
+    for tch in sorted_teachers():
         print(tch['name'])
         for sec in sorted([sec[1] for sec in tch['sections']]):
             for stuid in reports:
