@@ -56,7 +56,7 @@ def get_args(argv=sys.argv):
         else:
             sys.exit('Please specify original module file')
     if arg < lastsub:
-        subfiles = argv[arg:lastsub+1]
+        subfiles = argv[arg:lastsub]
     else:
         globfiles = Path('~/Downloads').expanduser().glob('submissions*.zip')
         for sf in globfiles:
