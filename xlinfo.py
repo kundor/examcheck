@@ -133,6 +133,7 @@ def filesindir(pdir='.', ext='xlsx'):
 if __name__ == '__main__':
     subfiles = get_args()
     writeallinfos(filesinzips(subfiles))
+    # writeallinfos(filesindir())
 
 # slow way to get info from openpyxl
 # might be worth it if we're already opening them (to convert to csv)

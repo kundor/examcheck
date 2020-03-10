@@ -6,7 +6,6 @@ import subprocess
 from glob import glob
 from hashlib import blake2b
 from pathlib import Path
-from zipfile import ZipFile, BadZipFile
 from datetime import datetime, timedelta
 from contextlib import closing
 from collections import Counter, defaultdict
@@ -17,7 +16,7 @@ from colorama import Fore
 from openpyxl import load_workbook
 
 from canvas import *
-from xlinfo import Info
+from xlinfo import Info, filesinzips
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from allgrades import fetch_grades
 from wherelink import haslink, links_desc
@@ -87,12 +86,15 @@ def get_mime(filename):
     result = subprocess.run(['file', '-b', '--mime-type', filename], capture_output=True)
     return result.stdout.decode().rstrip()
 
-def xls2xlsx(zipp, filename):
+def xls2xlsx(fdata):
+    filename = fdata.name
     if os.path.exists(filename + 'x'):
         print(f'{filename}x found', file=sys.stderr)
     else:
         print(f'Converting {filename} to xlsx', file=sys.stderr)
-        zipp.extract(filename)
+        with open(filename, 'xb') as out:
+            out.write(fdata.getbuffer())
+        fdata.close()
         if get_mime(filename) == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
             print("Appears to be misnamed .xlsx file", file=sys.stderr)
             os.rename(filename, filename + 'x')
@@ -159,7 +161,7 @@ def report_nonxlsx(filename):
         return # no known student to report
     reports[stuid].append(f'Non-xlsx file: {filename}')
 
-def checktemp(filename, fdata, size):
+def checktemp(filename, size):
     stuid = fileinfo(filename).stuid
     badname = '~' in filename
     small = size < 500
@@ -256,60 +258,51 @@ if len({ex['date'] for ex in exams}) > 1:
 warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
 warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
 
-for subfile in subfiles:
-    with ZipFile(subfile, 'r') as subs:
-        for filename in sorted(subs.namelist()):
-            if filename.endswith('.xlsx'):
-                fdata = io.BytesIO(subs.read(filename))
-                xlhash = bsum_mem(fdata)
-                size = filesize_mem(fdata)
-            elif filename.endswith('.xls'):
-                fdata = xls2xlsx(subs, filename)
-                xlhash = bsum_fid(fdata)
-                size = filesize_fid(fdata)
-            else:
-                report_nonxlsx(filename)
-                continue
-            codename, stuid, subid = fileinfo(filename)
-            stuids[stuid] += 1
-            if stuids[stuid] > 1:
-                print(f'{codename} seen {stuids[stuid]} times')
-                if xlhash == originfo.xlhash:
-                    print('This one is unmodified, ignoring')
-                    fdata.close()
-                    continue
-                prev = [inf for inf in infos if fileinfo(inf.filename).stuid == stuid]
-                if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
-                    infos.remove(prev[0])
-                    print(f'Removing unmodified file {prev[0].filename}')
-                elif any(p.xlhash == xlhash for p in prev):
-                    print('This one is identical to a previously seen file for this student; ignoring.')
-                    fdata.close()
-                    continue
-            if xlhash in xlhashes:
-                prev = xlhashes[xlhash]
-                print(f'File {filename} identical to previously seen file {prev.filename}')
-                infos.append(prev.replace(filename=filename))
-                fdata.close()
-                continue
-            if size < 6000:
-                reports[stuid].append(f'Small file, {size} bytes')
-            try:
-                wb = load_workbook(fdata, read_only=True)
-            except Exception as e:
-                print(filename, 'is not an xlsx file?', e, file=sys.stderr)
-                checktemp(filename, fdata, size)
-                continue
-            thecells, theinfo = process_workbook(xlhash, filename, wb)
-            for cval in thecells - origcells:
-                cellfiles[cval].append(filename)
-            csvhashes[theinfo.csvhash] += 1
-            infos.append(theinfo)
-            xlhashes[xlhash] = theinfo
-            if haslink(wb):
-                reports[stuid].append('Links to ' + links_desc(wb))
-            wb.close()
-            fdata.close()
+for file in filesinzips(subfiles):
+    xlhash = bsum_mem(file)
+    size = filesize_mem(file)
+    codename, stuid, subid = fileinfo(file.name)
+    stuids[stuid] += 1
+    if stuids[stuid] > 1:
+        print(f'{codename} seen {stuids[stuid]} times')
+        if xlhash == originfo.xlhash:
+            print('This one is unmodified, ignoring')
+            continue
+        prev = [inf for inf in infos if fileinfo(inf.filename).stuid == stuid]
+        if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
+            infos.remove(prev[0])
+            print(f'Removing unmodified file {prev[0].filename}')
+        elif any(p.xlhash == xlhash for p in prev):
+            print('This one is identical to a previously seen file for this student; ignoring.')
+            continue
+    if xlhash in xlhashes:
+        prev = xlhashes[xlhash]
+        print(f'File {file.name} identical to previously seen file {prev.filename}')
+        infos.append(prev.replace(filename=file.name))
+        continue
+    if file.name.endswith('.xls'):
+        file = xls2xlsx(file)
+    elif not file.name.endswith('.xlsx'):
+        report_nonxlsx(file.name)
+        continue
+    if size < 6000:
+        reports[stuid].append(f'Small file, {size} bytes')
+    try:
+        wb = load_workbook(file, read_only=True)
+    except Exception as e:
+        print(file.name, 'is not an xlsx file?', e, file=sys.stderr)
+        checktemp(file.name, size)
+        continue
+    thecells, theinfo = process_workbook(xlhash, file.name, wb)
+    for cval in thecells - origcells:
+        cellfiles[cval].append(file.name)
+    csvhashes[theinfo.csvhash] += 1
+    infos.append(theinfo)
+    xlhashes[xlhash] = theinfo
+    if haslink(wb):
+        reports[stuid].append('Links to ' + links_desc(wb))
+    wb.close()
+    file.close()
 
 for info in infos:
     # Update modder names afterward, so the long conversion process isn't held up by prompts
