@@ -168,10 +168,10 @@ def checktemp(filename, size):
         reports[stuid].append(f'Not an Excel file? {filename}')
 
 def pop_print_report(stu):
-    secname = stu['section']
+    secname = stu.get('section','')
     stuid = stu['id']
-    score = grades[stuid]
-    namegrad = f"{stu['name']} ({score})"
+    score = grades.get(stuid, '')
+    namegrad = f"{stu.get('name','')} ({score})"
     print(f'{secname:4} {namegrad:26} ' + ', '.join(reports.pop(stuid)))
 
 def dumb_lastname(tch):
