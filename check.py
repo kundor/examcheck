@@ -193,7 +193,10 @@ def checktemp(filename, size):
 def pop_print_report(stu):
     secname = stu.get('section','')
     stuid = stu['id']
-    score = grades.get(stuid, '')
+    try:
+        score = round(grades[stuid])
+    except:
+        score = ''
     namegrad = f"{stu.get('name','')} ({score})"
     print(f'{secname:4} {namegrad:26} ' + ', '.join(reports.pop(stuid)))
 
