@@ -50,7 +50,7 @@ def inemptydir():
     return not os.listdir()
 
 def get_args(argv=sys.argv):
-    subpat = re.compile(r"submissions( \([0-9]\))?\.zip")
+    subpat = re.compile(r"submissions \([0-9]+\)\.zip")
     quizids = []
     arg = 1
     while arg < len(argv) and argv[arg].isnumeric():
@@ -82,14 +82,12 @@ def get_args(argv=sys.argv):
     else:
         globfiles = Path('~/Downloads').expanduser().glob('submissions*.zip')
         for sf in globfiles:
-            if subpat.fullmatch(sf.name):
+            nums = numsonly(sf.stem)
+            if not nums or subpat.fullmatch(sf.name):
                 if filetime(sf).date() >= exdate:
                     subfiles.append(sf)
-                    continue
-            nums = numsonly(sf.stem)
-            if nums and nums != modnum:
-                continue
-            subfiles.append(sf)
+            elif nums == modnum:
+                subfiles.append(sf)
         if not subfiles or not yesno(f'Using files {subfiles}. OK? '):
             sys.exit('Please specify downloaded submissions zip')
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
