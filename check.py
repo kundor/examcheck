@@ -52,7 +52,7 @@ def get_args(argv=sys.argv):
         quizids.append(int(argv[arg]))
         arg += 1
     if not quizids:
-        exams = todays_exams('quiz_id')
+        exams = todays_exams()
         quizids = [e['quiz_id'] for e in exams]
     else:
         exams = dated_assigns('exams.json')
