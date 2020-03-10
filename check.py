@@ -5,6 +5,7 @@ import mmap
 import subprocess
 from hashlib import blake2b
 from pathlib import Path
+from operator import itemgetter
 from datetime import datetime, timedelta
 from contextlib import closing
 from collections import Counter, defaultdict
@@ -187,14 +188,15 @@ def sorted_teachers():
     return sorted(teachers, key=dumb_lastname)
 
 def print_reports():
+    studs = [studict[stuid] for stuid in reports]
     for tch in sorted_teachers():
         print(tch['name'])
         for sec in sorted([sec[1] for sec in tch['sections']]):
-            for stuid in reports:
-                stu = studict[stuid]
-                if stu['section'] == sec:
-                    pop_print_report(stu)
-            print()
+            secstuds = [stu for stu in studs if stu['section'] == sec]
+            for stu in sorted(secstuds, key=itemgetter('sortable_name')):
+                pop_print_report(stu)
+            if secstuds:
+                print()
     if reports:
         print('Leftovers?!')
         for stuid in reports:
