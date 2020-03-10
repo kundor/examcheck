@@ -176,7 +176,7 @@ def checkadd(sid, modder):
         modders[sid].append(modder)
     elif stat is Status.Unknown:
         stuname = studict[sid]['name'] 
-        if yesno(f'User {stuname}: modder {modder}. Add? ')
+        if yesno(f'User {stuname}: modder {modder}. Add? '):
             modders[sid].append(modder)
             return Status.Approved
     return stat
