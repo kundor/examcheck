@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 from datetime import datetime
+from contextlib import closing
 
 # timing samples (S19 Mod3; Mod2):
 #  exiftool:                        12.180 s;  9.288 s
@@ -98,14 +99,13 @@ def xml_props(ooxml, filename=None):
         print('Metadata not found (file docProps/core.xml missing) in file ' + filename, file=sys.stderr)
         return
     tree = ET.parse(prop)
-    tags = alltags(tree.getroot()) 
-    return Info(filename,
-            timeform(tags, 'created'),
-            tagval(tags, 'creator'),
-            timeform(tags, 'modified'),
-            tagval(tags, 'lastModifiedBy'))
-    prop.close()
-    ooxml.close()
+    tags = alltags(tree.getroot())
+    with closing(prop), closing(ooxml):
+        return Info(filename,
+                timeform(tags, 'created'),
+                tagval(tags, 'creator'),
+                timeform(tags, 'modified'),
+                tagval(tags, 'lastModifiedBy'))
 
 def workbook_props(wb, filename):
     """Get Info properties from open openpyxl workbook"""
@@ -115,7 +115,6 @@ def workbook_props(wb, filename):
               wb.properties.creator,
               wb.properties.modified,
               wb.properties.last_modified_by or '\u2205'))
-
 
 def writeallinfos(files, outfile='info'):
     with open(outfile, 'xt') as out:
