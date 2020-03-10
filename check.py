@@ -310,8 +310,8 @@ for subfile in subfiles:
                 reports[stuid].append(f'Small file, {size} bytes')
             try:
                 wb = load_workbook(fdata, read_only=True)
-            except BadZipFile as e:
-                print(filename, 'is not a zip file?', e, file=sys.stderr)
+            except Exception as e:
+                print(filename, 'is not an xlsx file?', e, file=sys.stderr)
                 checktemp(filename, fdata, size)
                 continue
             thecells, theinfo = process_workbook(xlhash, filename, wb)
