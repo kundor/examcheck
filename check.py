@@ -3,7 +3,6 @@
 import io
 import mmap
 import subprocess
-from glob import glob
 from hashlib import blake2b
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -48,10 +47,10 @@ def get_args(argv=sys.argv):
     subfiles = []
     if argv[-1].endswith('.xlsx'):
         lastsub = len(argv) - 1
-        origfile = argv[-1]
+        origfile = Path(argv[-1])
     else:
         lastsub = len(argv)
-        origfiles = glob(os.path.join(basedir(), 'original', f'Module_{modnum}_*.xlsx'))
+        origfiles = list((basedir() / 'original').glob(f'Module_{modnum}_*.xlsx'))
         if len(origfiles) == 1:
             origfile = origfiles[0]
         else:
@@ -59,7 +58,7 @@ def get_args(argv=sys.argv):
     if arg < lastsub:
         subfiles = argv[arg:lastsub+1]
     else:
-        globfiles = glob(os.path.expanduser('~/Downloads/submissions*.zip'))
+        globfiles = Path.('~/Downloads').expanduser().glob('submissions*.zip')
         for sf in globfiles:
             base = os.path.split(sf)[1]
             nums = numsonly(base)
@@ -150,6 +149,8 @@ def process_workbook(xlhash, filename, workbook):
 def process_file(filename):
     with open(filename, 'rb') as fid:
         xlhash = bsum_fid(fid)
+        if hasattr(filename, 'name'):
+            filename = filename.name
         with closing(load_workbook(fid, read_only=True)) as workbook:
             return process_workbook(xlhash, filename, workbook)
 
@@ -202,10 +203,10 @@ def print_reports():
             pop_print_report(studict[stuid])
 
 def basedir():
-    return str(Path(__file__).parent.resolve())
+    return Path(__file__).parent.resolve()
 
 def curdir():
-    return os.path.abspath(os.path.curdir)
+    return Path.cwd()
 
 def inbasedir():
     return curdir() == basedir()
@@ -237,7 +238,7 @@ if inbasedir():
     print('Using directory ' + mdir, file=sys.stderr)
 
 if not inemptydir():
-    if not yesno('Current directory ' + curdir() + ' is not empty. Proceed (may clobber files)? '):
+    if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
         sys.exit('Aborted.')
 
 teachers = load_file('teachers.json', json.load)
