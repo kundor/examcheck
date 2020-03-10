@@ -4,6 +4,7 @@ import io
 import mmap
 import subprocess
 import dataclasses as dc
+from glob import glob
 from hashlib import blake2b
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
@@ -41,6 +42,9 @@ class Info:
     asdict = dc.asdict
     replace = dc.replace
 
+def numsonly(string):
+    return ''.join(filter(str.isdigit, string))
+
 def get_args(argv=sys.argv):
     if len(argv) <= 2:
         sys.exit(USAGE)
@@ -57,13 +61,22 @@ def get_args(argv=sys.argv):
         exams = [ex for ex in exams if ex['quiz_id'] in quizids]
     if not quizids:
         sys.exit('Could not find any quiz IDs. ' + USAGE)
+    modnum = numsonly(exams[0]['name'])
     subfiles = []
     if arg < len(argv) - 1:
         subfiles = argv[arg:-1]
     else:
-        subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
+        globfiles = glob(os.path.expanduser('~/Downloads/submissions*.zip'))
+        for sf in globfiles:
+            base = os.path.split(sf)[1]
+            nums = numsonly(base)
+            if nums:
+                if nums != modnum:
+                    continue
+            subfiles.append(sf)
+        if not subfiles or not yesno(f'Using files {subfiles}. OK? '):
+            sys.exit('Please specify downloaded submissions zip')
     origfile = argv[-1]
-    modnum = ''.join(filter(str.isdigit, exams[0]['name']
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
     return exams, subfiles, origfile
 
@@ -220,7 +233,7 @@ def inemptydir():
 exams, subfiles, origfile = get_args()
 
 if inbasedir():
-    mdir = 'mod' + ''.join(filter(str.isdigit, exams[0]['name']
+    mdir = 'mod' + numsonly(exams[0]['name'])
     changetodir(mdir)
     print('Using directory ' + mdir, file=sys.stderr)
 
