@@ -107,6 +107,16 @@ def xml_props(ooxml, filename=None):
     prop.close()
     ooxml.close()
 
+def workbook_props(wb, filename):
+    """Get Info properties from open openpyxl workbook"""
+    # slow; worth it if we're already loading them (to convert to csv)
+    return Info(filename,
+              wb.properties.created,
+              wb.properties.creator,
+              wb.properties.modified,
+              wb.properties.last_modified_by or '\u2205'))
+
+
 def writeallinfos(files, outfile='info'):
     with open(outfile, 'xt') as out:
         for f in files:
@@ -134,17 +144,4 @@ if __name__ == '__main__':
     subfiles = get_args()
     writeallinfos(filesinzips(subfiles))
     # writeallinfos(filesindir())
-
-# slow way to get info from openpyxl
-# might be worth it if we're already opening them (to convert to csv)
-#        wb = openpyxl.load_workbook(f, read_only=True)
-#        print(f, 
-#              wb.properties.created.strftime('%m/%d/%Y %I:%M:%S %p'),
-#              round(wb.properties.created.replace(tzinfo=timezone.utc).timestamp()),
-#              wb.properties.creator,
-#              wb.properties.modified.strftime('%m/%d/%Y %I:%M:%S %p'),
-#              round(wb.properties.modified.replace(tzinfo=timezone.utc).timestamp()),
-#              wb.properties.last_modified_by or '',
-#              sep='\t', file=out)
-#        wb.close()
 
