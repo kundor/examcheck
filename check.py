@@ -24,7 +24,7 @@ from wherelink import haslink, links_desc
 from uniquecells import cleanval, CellCollector, filerpts, pairs_few, most_shared
 from modderupdate import checkadd, Status, studict, fileinfo, writeout
 
-USAGE = 'Arguments: [quizid(s)] <submission zip file(s)> <original Module file>'
+USAGE = 'Arguments: [quizid(s)] [submission zip file(s)] [original Module file]'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux')
 
@@ -46,8 +46,6 @@ def numsonly(string):
     return ''.join(filter(str.isdigit, string))
 
 def get_args(argv=sys.argv):
-    if len(argv) <= 2:
-        sys.exit(USAGE)
     quizids = []
     arg = 1
     while arg < len(argv) and argv[arg].isnumeric():
@@ -63,8 +61,18 @@ def get_args(argv=sys.argv):
         sys.exit('Could not find any quiz IDs. ' + USAGE)
     modnum = numsonly(exams[0]['name'])
     subfiles = []
-    if arg < len(argv) - 1:
-        subfiles = argv[arg:-1]
+    if argv[-1].endswith('.xlsx'):
+        lastsub = len(argv) - 1
+        origfile = argv[-1]
+    else:
+        lastsub = len(argv)
+        origfiles = glob(os.path.join(basedir(), 'original', f'Module_{modnum}_*.xlsx'))
+        if len(origfiles) == 1:
+            origfile = origfiles[0]
+        else:
+            sys.exit('Please specify original module file')
+    if arg < lastsub:
+        subfiles = argv[arg:lastsub+1]
     else:
         globfiles = glob(os.path.expanduser('~/Downloads/submissions*.zip'))
         for sf in globfiles:
@@ -76,7 +84,6 @@ def get_args(argv=sys.argv):
             subfiles.append(sf)
         if not subfiles or not yesno(f'Using files {subfiles}. OK? '):
             sys.exit('Please specify downloaded submissions zip')
-    origfile = argv[-1]
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
     return exams, subfiles, origfile
 
@@ -206,10 +213,12 @@ def print_reports():
         for stuid in reports:
             pop_print_report(studict[stuid])
 
+def basedir():
+    return Path(__file__).parent.resolve()
+
 def inbasedir():
-    basedir = Path(__file__).parent.resolve()
     curdir = os.path.abspath(os.path.curdir)
-    return curdir == basedir
+    return curdir == basedir()
 
 def changetodir(dirname):
     os.makedirs(dirname, exist_ok=True)
