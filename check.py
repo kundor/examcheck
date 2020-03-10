@@ -214,7 +214,7 @@ def print_reports():
             pop_print_report(studict[stuid])
 
 def basedir():
-    return Path(__file__).parent.resolve()
+    return str(Path(__file__).parent.resolve())
 
 def curdir():
     return os.path.abspath(os.path.curdir)
