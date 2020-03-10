@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import re
 import mmap
 import subprocess
 from hashlib import blake2b
@@ -29,7 +30,27 @@ sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='
 def numsonly(string):
     return ''.join(filter(str.isdigit, string))
 
+def filetime(path):
+    return datetime.fromtimestamp(Path(path).stat().st_mtime)
+
+def basedir():
+    return Path(__file__).parent.resolve()
+
+def curdir():
+    return Path.cwd()
+
+def inbasedir():
+    return curdir() == basedir()
+
+def changetodir(dirname):
+    os.makedirs(dirname, exist_ok=True)
+    os.chdir(dirname)
+
+def inemptydir():
+    return not os.listdir()
+
 def get_args(argv=sys.argv):
+    subpat = re.compile(r"submissions( \([0-9]\))?\.zip")
     quizids = []
     arg = 1
     while arg < len(argv) and argv[arg].isnumeric():
@@ -41,9 +62,10 @@ def get_args(argv=sys.argv):
     else:
         exams = dated_assigns('exams.json')
         exams = [ex for ex in exams if ex['quiz_id'] in quizids]
-    if not quizids:
+    if not exams:
         sys.exit('Could not find any quiz IDs. ' + USAGE)
     modnum = numsonly(exams[0]['name'])
+    exdate = exams[0]['date']
     subfiles = []
     if argv[-1].endswith('.xlsx'):
         lastsub = len(argv) - 1
@@ -60,6 +82,10 @@ def get_args(argv=sys.argv):
     else:
         globfiles = Path('~/Downloads').expanduser().glob('submissions*.zip')
         for sf in globfiles:
+            if subpat.fullmatch(sf.name):
+                if filetime(sf).date() >= exdate:
+                    subfiles.append(sf)
+                    continue
             nums = numsonly(sf.stem)
             if nums and nums != modnum:
                 continue
@@ -194,22 +220,6 @@ def print_reports():
         print('Leftovers?!')
         for stuid in reports:
             pop_print_report(studict[stuid])
-
-def basedir():
-    return Path(__file__).parent.resolve()
-
-def curdir():
-    return Path.cwd()
-
-def inbasedir():
-    return curdir() == basedir()
-
-def changetodir(dirname):
-    os.makedirs(dirname, exist_ok=True)
-    os.chdir(dirname)
-
-def inemptydir():
-    return not os.listdir()
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
