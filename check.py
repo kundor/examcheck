@@ -216,9 +216,11 @@ def print_reports():
 def basedir():
     return Path(__file__).parent.resolve()
 
+def curdir():
+    return os.path.abspath(os.path.curdir)
+
 def inbasedir():
-    curdir = os.path.abspath(os.path.curdir)
-    return curdir == basedir()
+    return curdir() == basedir()
 
 def changetodir(dirname):
     os.makedirs(dirname, exist_ok=True)
@@ -247,7 +249,7 @@ if inbasedir():
     print('Using directory ' + mdir, file=sys.stderr)
 
 if not inemptydir():
-    if not yesno('Directory is not empty. Proceed (may clobber files)? '):
+    if not yesno('Current directory ' + curdir() + ' is not empty. Proceed (may clobber files)? '):
         sys.exit('Aborted.')
 
 teachers = load_file('teachers.json', json.load)
