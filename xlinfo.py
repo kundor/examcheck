@@ -3,29 +3,55 @@
 import io
 import os
 import sys
-#import glob
-import datetime
+import dataclasses as dc
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from zipfile import ZipFile, BadZipFile
+from datetime import datetime
 
 # timing samples (S19 Mod3; Mod2):
 #  exiftool:                        12.180 s;  9.288 s
 #  openpyxl method:                 19.176 s; 11.632 s
 #  zipfile/xml method:               0.610 s;  0.397 s
 #  directly out of submissions.zip:            1.925 s  (saves 2.440 s unzipping)
-#    
 
 # xlns = {'cp': "http://schemas.openxmlformats.org/package/2006/metadata/core-properties",
 #         'dc': "http://purl.org/dc/elements/1.1/",
 #         'dcterms': "http://purl.org/dc/terms/"}
 
-# xlfiles = sorted(glob.glob('*.xlsx'))
+@dc.dataclass
+class Info:
+    filename: str
+    creation: datetime
+    creator: str
+    modified: datetime
+    modder: str
+    xlhash: str = ''
+    csvhash: str = ''
+    simhash: int = 0
 
-if len(sys.argv) > 1:
-    subfiles = sys.argv[1:]
-else:
-    subfiles = [os.path.expanduser('~/Downloads/submissions.zip')]
-    print(f'Using file {subfiles[0]}', file=sys.stderr)
+    asdict = dc.asdict
+    replace = dc.replace
+
+def timeforms(dt):
+    """Format datetime as m/d/Y H:M:S and timestamp"""
+    return dt.strftime('%m/%d/%Y %I:%M:%S %p'), str(round(dt.timestamp()))
+
+def tabline(info):
+    """Tab-delimited line of first 5 Info fields, with times as timestamps and m/d/Y H:M:S format"""
+    return '\t'.join([info.filename,
+            *timeforms(info.creation),
+            info.creator,
+            *timeforms(info.modified),
+            info.modder])
+
+def get_args(argv=sys.argv):
+    if len(argv) > 1:
+        subfiles = argv[1:]
+    else:
+        subfiles = [Path('~/Downloads/submissions.zip').expanduser()]
+        print(f'Using file {subfiles[0]}', file=sys.stderr)
+    return subfiles
 
 def alltags(xmlroot):
     tags = {}
@@ -37,65 +63,87 @@ def alltags(xmlroot):
         tags[tag] = child.text
     return tags
 
-def dtime(timetag):
-    return datetime.datetime.strptime(timetag + '+0000', '%Y-%m-%dT%H:%M:%SZ%z') # to force UTC
-
 def tagval(tags, key, default='\u2205'):
     return tags.get(key, default) or ''
 
-def timeforms(tags, key):
-    """Return given key (a datetime) as timestamp, string tuple"""
+def timeform(tags, key):
+    """Return given key as a datetime, or the raw string if it can't be parsed"""
     thetime = tagval(tags, key)
-    if len(thetime) > 5:
-        thetime = dtime(thetime)
-        return round(thetime.timestamp()), thetime.strftime('%m/%d/%Y %I:%M:%S %p')
-    return thetime, thetime
+    try:
+        return datetime.strptime(thetime + '+0000', '%Y-%m-%dT%H:%M:%SZ%z') # to force UTC
+    except ValueError:
+        return thetime
 
-with open('info', 'xt') as out:
+def get_name(filething):
+    if isinstance(filething, (str, os.PathLike)):
+        return str(filething)
+    elif hasattr(filething, 'name'):
+        return filething.name
+    elif hasattr(filething, 'filename'):
+        return filething.filename
+    else:
+        return '<Unknown>'
+
+def xml_props(ooxml, filename=None):
+    if filename is None:
+        filename = get_name(ooxml)
+    try:
+        ooxml = ZipFile(ooxml, 'r')
+    except BadZipFile as e:
+        print(filename, 'is not a zip file?', e, file=sys.stderr)
+        return
+    try:
+        prop = ooxml.open('docProps/core.xml', 'r')
+    except KeyError:
+        print('Metadata not found (file docProps/core.xml missing) in file ' + filename, file=sys.stderr)
+        return
+    tree = ET.parse(prop)
+    tags = alltags(tree.getroot()) 
+    return Info(filename,
+            timeform(tags, 'created'),
+            tagval(tags, 'creator'),
+            timeform(tags, 'modified'),
+            tagval(tags, 'lastModifiedBy'))
+    prop.close()
+    ooxml.close()
+
+def writeallinfos(files, outfile='info'):
+    with open(outfile, 'xt') as out:
+        for f in files:
+            xp = xml_props(f)
+            if xp:
+                print(tabline(xp), file=out)
+
+def filesinzip(subfile):
+    """Iterator yielding BytesIO for each file in the zip"""
+    with ZipFile(subfile, 'r') as subs:
+        for name in sorted(subs.namelist()):
+            with io.BytesIO(subs.read(name)) as fdata:
+                fdata.name = name
+                yield fdata
+
+def filesinzips(subfiles):
     for subfile in subfiles:
-        with ZipFile(subfile, 'r') as subs:
-            for f in sorted(subs.namelist()):
-                if not f.endswith('.xlsx'):
-                    print('Not a xlsx file: ' + f, file=sys.stderr)
-                    continue
-                fdata = io.BytesIO(subs.read(f))
-                try:
-                    xlsx = ZipFile(fdata, 'r')
-                except BadZipFile as e:
-                    print(f, 'is not a zip file?', e, file=sys.stderr)
-                    continue
-                try:
-                    prop = xlsx.open('docProps/core.xml', 'r')
-                except KeyError:
-                    print('Metadata not found (file docProps/core.xml missing) in file ' + f, file=sys.stderr)
-                    continue
-                tree = ET.parse(prop)
-                tags = alltags(tree.getroot()) 
-                mstamp, mtime = timeforms(tags, 'modified')
-                cstamp, ctime = timeforms(tags, 'created')
-                print(f,
-                      ctime,
-                      cstamp,
-                      tagval(tags, 'creator'),
-                      mtime,
-                      mstamp,
-                      tagval(tags, 'lastModifiedBy'),
-                      sep='\t', file=out)
-                prop.close()
-                xlsx.close()
-                fdata.close()
-        
-        
+        yield from filesinzip(subfile)
+
+def filesindir(pdir='.', ext='xlsx'):
+    pdir = Path(pdir)
+    return sorted(pdir.glob('*.' + ext))
+
+if __name__ == '__main__':
+    subfiles = get_args()
+    writeallinfos(filesinzips(subfiles))
+
 # slow way to get info from openpyxl
 # might be worth it if we're already opening them (to convert to csv)
 #        wb = openpyxl.load_workbook(f, read_only=True)
 #        print(f, 
 #              wb.properties.created.strftime('%m/%d/%Y %I:%M:%S %p'),
-#              round(wb.properties.created.replace(tzinfo=datetime.timezone.utc).timestamp()),
+#              round(wb.properties.created.replace(tzinfo=timezone.utc).timestamp()),
 #              wb.properties.creator,
 #              wb.properties.modified.strftime('%m/%d/%Y %I:%M:%S %p'),
-#              round(wb.properties.modified.replace(tzinfo=datetime.timezone.utc).timestamp()),
+#              round(wb.properties.modified.replace(tzinfo=timezone.utc).timestamp()),
 #              wb.properties.last_modified_by or '',
 #              sep='\t', file=out)
 #        wb.close()
-        
+

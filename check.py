@@ -3,7 +3,6 @@
 import io
 import mmap
 import subprocess
-import dataclasses as dc
 from glob import glob
 from hashlib import blake2b
 from pathlib import Path
@@ -18,6 +17,7 @@ from colorama import Fore
 from openpyxl import load_workbook
 
 from canvas import *
+from xlinfo import Info
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from allgrades import fetch_grades
 from wherelink import haslink, links_desc
@@ -27,20 +27,6 @@ from modderupdate import checkadd, Status, studict, fileinfo, writeout
 USAGE = 'Arguments: [quizid(s)] [submission zip file(s)] [original Module file]'
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux')
-
-@dc.dataclass
-class Info:
-    filename: str
-    creation: datetime
-    creator: str
-    modified: datetime
-    modder: str
-    xlhash: str
-    csvhash: str
-    simhash: int
-
-    asdict = dc.asdict
-    replace = dc.replace
 
 def numsonly(string):
     return ''.join(filter(str.isdigit, string))
