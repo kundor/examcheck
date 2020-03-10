@@ -114,7 +114,7 @@ def workbook_props(wb, filename):
               wb.properties.created,
               wb.properties.creator,
               wb.properties.modified,
-              wb.properties.last_modified_by or '\u2205'))
+              wb.properties.last_modified_by or '\u2205')
 
 def writeallinfos(files, outfile='info'):
     with open(outfile, 'xt') as out:
