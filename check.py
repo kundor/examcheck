@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import io
 import mmap
 import subprocess
 from hashlib import blake2b
