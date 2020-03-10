@@ -49,8 +49,14 @@ def changetodir(dirname):
 def inemptydir():
     return not os.listdir()
 
-def get_args(argv=sys.argv):
+def isgoodsubfile(subfile, exdate):
     subpat = re.compile(r"submissions \([0-9]+\)\.zip")
+    nums = numsonly(subfile.stem)
+    if not nums or subpat.fullmatch(subfile.name):
+        return filetime(subfile).date() >= exdate
+    return nums == modnum
+
+def get_args(argv=sys.argv):
     quizids = []
     arg = 1
     while arg < len(argv) and argv[arg].isnumeric():
@@ -66,7 +72,6 @@ def get_args(argv=sys.argv):
         sys.exit('Could not find any quiz IDs. ' + USAGE)
     modnum = numsonly(exams[0]['name'])
     exdate = exams[0]['date']
-    subfiles = []
     if argv[-1].endswith('.xlsx'):
         lastsub = len(argv) - 1
         origfile = Path(argv[-1])
@@ -81,13 +86,7 @@ def get_args(argv=sys.argv):
         subfiles = argv[arg:lastsub]
     else:
         globfiles = Path('~/Downloads').expanduser().glob('submissions*.zip')
-        for sf in globfiles:
-            nums = numsonly(sf.stem)
-            if not nums or subpat.fullmatch(sf.name):
-                if filetime(sf).date() >= exdate:
-                    subfiles.append(sf)
-            elif nums == modnum:
-                subfiles.append(sf)
+        subfiles = [sf for sf in globfiles if isgoodsubfile(sf, exdate)]
         if not subfiles or not yesno(f'Using files {subfiles}. OK? '):
             sys.exit('Please specify downloaded submissions zip')
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
