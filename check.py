@@ -58,7 +58,7 @@ def get_args(argv=sys.argv):
     if arg < lastsub:
         subfiles = argv[arg:lastsub+1]
     else:
-        globfiles = Path.('~/Downloads').expanduser().glob('submissions*.zip')
+        globfiles = Path('~/Downloads').expanduser().glob('submissions*.zip')
         for sf in globfiles:
             nums = numsonly(sf.stem)
             if nums and nums != modnum:
