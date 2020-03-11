@@ -32,7 +32,7 @@ namesid() {
     local fn="$1"
     curname="${fn%%_*}"
     fn="${fn#*_}"
-    curid="${fn%%_*}"
+    curid="${fn%%[_.]*}"
 }
 
 reportline() {
