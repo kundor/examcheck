@@ -7,7 +7,7 @@ import dataclasses as dc
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import closing
 
 # timing samples (S19 Mod3; Mod2):
@@ -111,9 +111,9 @@ def workbook_props(wb, filename, *args):
     """Get Info properties from open openpyxl workbook"""
     # slow; worth it if we're already loading them (to convert to csv)
     return Info(filename,
-              wb.properties.created,
+              wb.properties.created.replace(tzinfo=timezone.utc),
               wb.properties.creator,
-              wb.properties.modified,
+              wb.properties.modified.replace(tzinfo=timezone.utc),
               wb.properties.last_modified_by or '\u2205',
               *args)
 

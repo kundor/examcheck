@@ -6,7 +6,7 @@ import subprocess
 from hashlib import blake2b
 from pathlib import Path
 from operator import itemgetter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from contextlib import closing
 from collections import Counter, defaultdict
 
@@ -190,7 +190,7 @@ def checktemp(filename, size):
     else:
         reports[stuid].append(f'Not an Excel file? {filename}')
 
-def pop_print_report(stu):
+def pop_print_report(reports, stu):
     secname = stu.get('section','')
     stuid = stu['id']
     try:
@@ -213,7 +213,7 @@ def print_reports(reports):
         for sec in sorted([sec[1] for sec in tch['sections']]):
             secstuds = [stu for stu in studs if stu['section'] == sec]
             for stu in sorted(secstuds, key=itemgetter('sortable_name')):
-                pop_print_report(stu)
+                pop_print_report(reports, stu)
             if secstuds:
                 print()
     if reports:
@@ -233,10 +233,16 @@ def checkstuid(info, infos):
         if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
             infos.remove(prev[0])
             print(f'Removing unmodified file {prev[0].filename}')
-        elif any(p.xlhash == xlhash for p in prev):
+        elif any(p.xlhash == info.xlhash for p in prev):
             print('This one is identical to a previously seen file for this student; ignoring.')
             return False
     return True
+
+def checksize(f):
+    stuid = fileinfo(f.name).stuid
+    size = filesize_mem(f)
+    if size < 6000:
+        reports[stuid].append(f'Small file, {size} bytes')
 
 def quickinfos(subfiles):
     infos = []
@@ -249,6 +255,7 @@ def quickinfos(subfiles):
             xp.xlhash = bsum_mem(f)
             if checkstuid(xp, infos):
                 infos.append(xp)
+                checksize(f)
         else:
             checktemp(f.name, filesize_mem(f))
     return infos
@@ -328,26 +335,31 @@ teachers = load_file('teachers.json', json.load)
 origcells, originfo = process_file(origfile)
 
 cellfiles = defaultdict(list) # map cell_content : files
-infos = []
 grades = fetch_grades([ex['quiz_id'] for ex in exams]) # map student_id : score
 stuids = Counter()
 xlhashes = {}
 reports = defaultdict(list) # map stuid : strings
 
-examtime = datetime.combine(exams[0]['date'], Time(17)) # 5 pm
+examtime = datetime.combine(exams[0]['date'], Time(17)).replace(tzinfo=timezone.utc) # 5 pm
 if len({ex['date'] for ex in exams}) > 1:
     print(f'Warning: exams on different dates. Using first exam {exams[0]["date"]}', file=sys.stderr)
 
 warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
 warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
 
-for info in quickinfos(subfiles):
+infos = quickinfos(subfiles)
+for info in infos:
     reportinfo(info)
 
 print_reports(reports.copy())
+print('---------------------')
 
 for file in filesinzips(subfiles):
-    info = next(i for i in infos if i.filename in (file.name, file.name + 'x'))
+    try:
+        info = next(i for i in infos if i.filename in (file.name, file.name + 'x'))
+    except StopIteration:
+        print('blahhhh', file)
+        continue
     codename, stuid, subid = fileinfo(info.filename)
     if info.xlhash in xlhashes:
         prev = xlhashes[info.xlhash]
@@ -358,20 +370,20 @@ for file in filesinzips(subfiles):
     elif not file.name.endswith('.xlsx'):
         report_nonxlsx(file.name)
         continue
-    if size < 6000:
-        reports[stuid].append(f'Small file, {size} bytes')
     try:
         wb = load_workbook(file, read_only=True)
     except Exception as e:
         print(file.name, 'is not an xlsx file?', e, file=sys.stderr)
         checktemp(file.name, size)
         continue
-    thecells, theinfo = process_workbook(xlhash, file.name, wb)
+    thecells, theinfo = process_workbook(info.xlhash, file.name, wb)
     for cval in thecells - origcells:
         cellfiles[cval].append(file.name)
-    if info != theinfo:
+    if info != theinfo.replace(csvhash='', simhash=0):
         print('different Info:', info, theinfo, file=sys.stderr)
-    xlhashes[xlhash] = info
+    info.csvhash = theinfo.csvhash
+    info.simhash = theinfo.simhash
+    xlhashes[info.xlhash] = info
     if haslink(wb):
         reports[stuid].append('Links to ' + links_desc(wb))
     wb.close()
@@ -379,7 +391,7 @@ for file in filesinzips(subfiles):
 
 writeout()
 pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
-print_reports()
+print_reports(reports.copy())
 
 reportidentical('xlhash')
 reportidentical('csvhash')
