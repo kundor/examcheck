@@ -248,9 +248,6 @@ def quickinfos(subfiles):
     infos = []
     for f in filesinzips(subfiles):
         xp = xml_props(f)
-        if not xp and f.name.endswith('.xls'):
-            file = xls2xlsx(f)
-            xp = xml_props(file)
         if xp:
             xp.xlhash = bsum_mem(f)
             if checkstuid(xp, infos):
