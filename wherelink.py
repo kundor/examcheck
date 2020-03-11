@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import sys
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 from openpyxl import load_workbook
 
 def haslink(workbook):
@@ -9,7 +9,10 @@ def haslink(workbook):
 
 def file_haslink(fid):
     """Given open .xlsx file object, or path to one, return if it contains links"""
-    zf = ZipFile(fid, 'r')
+    try:
+        zf = ZipFile(fid, 'r')
+    except BadZipFile:
+        return False # Unknown actually
     try:
         zf.getinfo('xl/externalLinks/externalLink1.xml')
         return True
