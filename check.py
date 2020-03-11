@@ -16,7 +16,7 @@ from colorama import Fore
 from openpyxl import load_workbook
 
 from canvas import *
-from xlinfo import filesinzips, workbook_props
+from xlinfo import filesinzips, workbook_props, xml_props
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from allgrades import fetch_grades
 from wherelink import haslink, links_desc
@@ -206,7 +206,7 @@ def dumb_lastname(tch):
 def sorted_teachers():
     return sorted(teachers, key=dumb_lastname)
 
-def print_reports():
+def print_reports(reports):
     studs = [studict[stuid] for stuid in reports]
     for tch in sorted_teachers():
         print(tch['name'])
@@ -220,6 +220,79 @@ def print_reports():
         print('Leftovers?!')
         for stuid in reports:
             pop_print_report(studict[stuid])
+
+def checkstuid(info, infos):
+    codename, stuid, subid = fileinfo(info.filename)
+    stuids[stuid] += 1
+    if stuids[stuid] > 1:
+        print(f'{codename} seen {stuids[stuid]} times')
+        if info.xlhash == originfo.xlhash:
+            print('This one is unmodified, ignoring')
+            return False
+        prev = [inf for inf in infos if fileinfo(inf.filename).stuid == stuid]
+        if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
+            infos.remove(prev[0])
+            print(f'Removing unmodified file {prev[0].filename}')
+        elif any(p.xlhash == xlhash for p in prev):
+            print('This one is identical to a previously seen file for this student; ignoring.')
+            return False
+    return True
+
+def quickinfos(subfiles):
+    infos = []
+    for f in filesinzips(subfiles):
+        xp = xml_props(f)
+        if not xp and f.name.endswith('.xls'):
+            file = xls2xlsx(f)
+            xp = xml_props(file)
+        if xp:
+            xp.xlhash = bsum_mem(f)
+            if checkstuid(xp, infos):
+                infos.append(xp)
+        else:
+            checktemp(f.name, filesize_mem(f))
+    return infos
+
+def reportinfo(info):
+    global originfo
+    codename, stuid, subid = fileinfo(info.filename)
+    docreatmsg = False
+    creatmsg = 'Created'
+    if info.creator != originfo.creator:
+        docreatmsg = True
+        creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
+    if info.creation != originfo.creation:
+        docreatmsg = True
+        if abs(info.creation - originfo.creation) < timedelta(days=1):
+            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x %X}' + Fore.RESET
+        else:
+            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x}' + Fore.RESET
+    if docreatmsg:
+        reports[stuid].append(creatmsg)
+
+    domodmsg = False
+    modmsg = 'Last modified'
+    stat = checkadd(stuid, info.modder)
+    # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
+    if stat is Status.DNE:
+        return
+    stu = studict[stuid]
+    if stat is Status.Unknown:
+        domodmsg = True
+        modmsg += ' by ' + Fore.RED + info.modder + Fore.RESET
+    elif stat is Status.Boo and info.xlhash == originfo.xlhash:
+        reports[stuid].append('Unmodified')
+    elif stat is Status.Boo and info.modified == originfo.modified:
+        reports[stuid].append('Metadata says unmodified')
+    elif stat is Status.Boo:
+        reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
+    if info.modified > examtime or info.modified < examtime - timedelta(days=9) and stat is not Status.Boo:
+        if not domodmsg:
+            modmsg += ' by ' + info.modder
+        modmsg += ' on ' + Fore.RED + f'{info.modified:%x}' + Fore.RESET
+        domodmsg = True
+    if domodmsg:
+        reports[stuid].append(modmsg)
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
@@ -262,23 +335,15 @@ if len({ex['date'] for ex in exams}) > 1:
 warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
 warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
 
+for info in quickinfos(subfiles):
+    reportinfo(info)
+
+print_reports(reports.copy())
+
 for file in filesinzips(subfiles):
     xlhash = bsum_mem(file)
     size = filesize_mem(file)
     codename, stuid, subid = fileinfo(file.name)
-    stuids[stuid] += 1
-    if stuids[stuid] > 1:
-        print(f'{codename} seen {stuids[stuid]} times')
-        if xlhash == originfo.xlhash:
-            print('This one is unmodified, ignoring')
-            continue
-        prev = [inf for inf in infos if fileinfo(inf.filename).stuid == stuid]
-        if prev[0].xlhash == originfo.xlhash: # Only the first added could be unmodified
-            infos.remove(prev[0])
-            print(f'Removing unmodified file {prev[0].filename}')
-        elif any(p.xlhash == xlhash for p in prev):
-            print('This one is identical to a previously seen file for this student; ignoring.')
-            continue
     if xlhash in xlhashes:
         prev = xlhashes[xlhash]
         print(f'File {file.name} identical to previously seen file {prev.filename}')
@@ -307,47 +372,6 @@ for file in filesinzips(subfiles):
         reports[stuid].append('Links to ' + links_desc(wb))
     wb.close()
     file.close()
-
-for info in infos:
-    # Update modder names afterward, so the long conversion process isn't held up by prompts
-    codename, stuid, subid = fileinfo(info.filename)
-    docreatmsg = False
-    creatmsg = 'Created'
-    if info.creator != originfo.creator:
-        docreatmsg = True
-        creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
-    if info.creation != originfo.creation:
-        docreatmsg = True
-        if abs(info.creation - originfo.creation) < timedelta(days=1):
-            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x %X}' + Fore.RESET
-        else:
-            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x}' + Fore.RESET
-    if docreatmsg:
-        reports[stuid].append(creatmsg)
-
-    domodmsg = False
-    modmsg = 'Last modified'
-    stat = checkadd(stuid, info.modder)
-    # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
-    if stat is Status.DNE:
-        continue
-    stu = studict[stuid]
-    if stat is Status.Unknown:
-        domodmsg = True
-        modmsg += ' by ' + Fore.RED + info.modder + Fore.RESET
-    elif stat is Status.Boo and info.xlhash == originfo.xlhash:
-        reports[stuid].append('Unmodified')
-    elif stat is Status.Boo and info.modified == originfo.modified:
-        reports[stuid].append('Metadata says unmodified')
-    elif stat is Status.Boo:
-        reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
-    if info.modified > examtime or info.modified < examtime - timedelta(days=9) and stat is not Status.Boo:
-        if not domodmsg:
-            modmsg += ' by ' + info.modder
-        modmsg += ' on ' + Fore.RED + f'{info.modified:%x}' + Fore.RESET
-        domodmsg = True
-    if domodmsg:
-        reports[stuid].append(modmsg)
 
 
 writeout()
