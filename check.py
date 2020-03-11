@@ -363,6 +363,7 @@ for file in filesinzips(subfiles):
         info = None
         xlhash = bsum_mem(file)
     codename, stuid, subid = fileinfo(file.name)
+    size = filesize_mem(file)
     if xlhash in xlhashes:
         prev = xlhashes[xlhash]
         print(f'File {file.name} identical to previously seen file {prev.filename}')
