@@ -19,7 +19,7 @@ from canvas import *
 from xlinfo import filesinzips, workbook_props, xml_props
 from xlsx2csv import process_cells, RowVisitor, SHEETSEP
 from allgrades import fetch_grades
-from wherelink import haslink, links_desc
+from wherelink import haslink, links_desc, file_haslink
 from uniquecells import cleanval, CellCollector, filerpts, pairs_few, most_shared
 from modderupdate import checkadd, Status, studict, fileinfo, writeout
 
@@ -244,6 +244,13 @@ def checksize(f):
     if size < 6000:
         reports[stuid].append(f'Small file, {size} bytes')
 
+def checklink(f):
+    stuid = fileinfo(f.name).stuid
+    if file_haslink(f):
+        wb = load_workbook(f, read_only=True)
+        reports[stuid].append('Links to ' + links_desc(wb))
+        wb.close()
+
 def quickinfos(subfiles):
     infos = []
     for f in filesinzips(subfiles):
@@ -253,6 +260,7 @@ def quickinfos(subfiles):
             if checkstuid(xp, infos):
                 infos.append(xp)
                 checksize(f)
+                checklink(f)
         else:
             checktemp(f.name, filesize_mem(f))
     return infos

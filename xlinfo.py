@@ -113,11 +113,11 @@ def ole_props(olefile, filename=None, *args):
     if filename is None:
         filename = get_name(olefile)
     try:
-        with OleFileIO(olefile) as ole: # accepts path, file-like object, bytes
-            meta = ole.get_metadata()
+        ole = OleFileIO(olefile) # accepts path, file-like object, bytes
     except OSError as e:
         print(filename, e, file=sys.stderr)
         return
+    meta = ole.get_metadata()
     return Info(filename,
             meta.create_time.replace(tzinfo=timezone.utc),
             meta.author.decode(),
