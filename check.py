@@ -49,7 +49,7 @@ def changetodir(dirname):
 def inemptydir():
     return not os.listdir()
 
-def isgoodsubfile(subfile, exdate):
+def isgoodsubfile(subfile, exdate, modnum):
     subpat = re.compile(r"submissions \([0-9]+\)\.zip")
     nums = numsonly(subfile.stem)
     if not nums or subpat.fullmatch(subfile.name):
@@ -86,7 +86,7 @@ def get_args(argv=sys.argv):
         subfiles = argv[arg:lastsub]
     else:
         globfiles = Path('~/Downloads').expanduser().glob('submissions*.zip')
-        subfiles = [sf for sf in globfiles if isgoodsubfile(sf, exdate)]
+        subfiles = [sf for sf in globfiles if isgoodsubfile(sf, exdate, modnum)]
         if not subfiles or not yesno(f'Using files {subfiles}. OK? '):
             sys.exit('Please specify downloaded submissions zip')
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
@@ -340,7 +340,7 @@ stuids = Counter()
 xlhashes = {}
 reports = defaultdict(list) # map stuid : strings
 
-examtime = datetime.combine(exams[0]['date'], Time(17)).replace(tzinfo=timezone.utc) # 5 pm
+examtime = datetime.combine(exams[0]['date'], Time(17)).astimezone(timezone.utc) # 5 pm
 if len({ex['date'] for ex in exams}) > 1:
     print(f'Warning: exams on different dates. Using first exam {exams[0]["date"]}', file=sys.stderr)
 
@@ -357,12 +357,14 @@ print('---------------------')
 for file in filesinzips(subfiles):
     try:
         info = next(i for i in infos if i.filename in (file.name, file.name + 'x'))
+        xlhash = info.xlhash
     except StopIteration:
-        print('blahhhh', file)
-        continue
-    codename, stuid, subid = fileinfo(info.filename)
-    if info.xlhash in xlhashes:
-        prev = xlhashes[info.xlhash]
+        print(f'Could not find quickinfo for file {file.name}', file=sys.stderr)
+        info = None
+        xlhash = bsum_mem(file)
+    codename, stuid, subid = fileinfo(file.name)
+    if xlhash in xlhashes:
+        prev = xlhashes[xlhash]
         print(f'File {file.name} identical to previously seen file {prev.filename}')
         continue
     if file.name.endswith('.xls'):
@@ -376,14 +378,17 @@ for file in filesinzips(subfiles):
         print(file.name, 'is not an xlsx file?', e, file=sys.stderr)
         checktemp(file.name, size)
         continue
-    thecells, theinfo = process_workbook(info.xlhash, file.name, wb)
+    thecells, theinfo = process_workbook(xlhash, file.name, wb)
     for cval in thecells - origcells:
         cellfiles[cval].append(file.name)
-    if info != theinfo.replace(csvhash='', simhash=0):
+    if info and info != theinfo.replace(csvhash='', simhash=0):
         print('different Info:', info, theinfo, file=sys.stderr)
-    info.csvhash = theinfo.csvhash
-    info.simhash = theinfo.simhash
-    xlhashes[info.xlhash] = info
+    if info:
+        info.csvhash = theinfo.csvhash
+        info.simhash = theinfo.simhash
+    else:
+        infos.append(theinfo)
+    xlhashes[xlhash] = theinfo
     if haslink(wb):
         reports[stuid].append('Links to ' + links_desc(wb))
     wb.close()
