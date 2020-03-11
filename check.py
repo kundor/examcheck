@@ -294,6 +294,13 @@ def reportinfo(info):
     if domodmsg:
         reports[stuid].append(modmsg)
 
+def reportidentical(hasht):
+    hashes = Counter(i.asdict()[hasht] for i in infos)
+    for shash, count in hashes.most_common():
+        if count <= 1:
+            break
+        print(f'Identical {hasht}: ' + ', '.join(i.filename for i in infos if i.asdict()[hasht] == shash))
+
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
 # However, it only gives an HTML page with authentication error :(
@@ -325,7 +332,6 @@ infos = []
 grades = fetch_grades([ex['quiz_id'] for ex in exams]) # map student_id : score
 stuids = Counter()
 xlhashes = {}
-csvhashes = Counter()
 reports = defaultdict(list) # map stuid : strings
 
 examtime = datetime.combine(exams[0]['date'], Time(17)) # 5 pm
@@ -341,13 +347,11 @@ for info in quickinfos(subfiles):
 print_reports(reports.copy())
 
 for file in filesinzips(subfiles):
-    xlhash = bsum_mem(file)
-    size = filesize_mem(file)
-    codename, stuid, subid = fileinfo(file.name)
-    if xlhash in xlhashes:
-        prev = xlhashes[xlhash]
+    info = next(i for i in infos if i.filename in (file.name, file.name + 'x'))
+    codename, stuid, subid = fileinfo(info.filename)
+    if info.xlhash in xlhashes:
+        prev = xlhashes[info.xlhash]
         print(f'File {file.name} identical to previously seen file {prev.filename}')
-        infos.append(prev.replace(filename=file.name))
         continue
     if file.name.endswith('.xls'):
         file = xls2xlsx(file)
@@ -365,28 +369,21 @@ for file in filesinzips(subfiles):
     thecells, theinfo = process_workbook(xlhash, file.name, wb)
     for cval in thecells - origcells:
         cellfiles[cval].append(file.name)
-    csvhashes[theinfo.csvhash] += 1
-    infos.append(theinfo)
-    xlhashes[xlhash] = theinfo
+    if info != theinfo:
+        print('different Info:', info, theinfo, file=sys.stderr)
+    xlhashes[xlhash] = info
     if haslink(wb):
         reports[stuid].append('Links to ' + links_desc(wb))
     wb.close()
     file.close()
 
-
 writeout()
 pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
 print_reports()
 
-for chash, count in csvhashes.most_common():
-    if count <= 1:
-        break
-    print('Identical CSV: ' + ', '.join(i.filename for i in infos if i.csvhash == chash))
-
-for shash, count in Counter(i.simhash for i in infos).most_common():
-    if count <= 1:
-        break
-    print('Identical simhash: ' + ', '.join(i.filename for i in infos if i.simhash == shash))
+reportidentical('xlhash')
+reportidentical('csvhash')
+reportidentical('simhash')
 
 rpts = filerpts(cellfiles)
 most_shared(rpts, cellfiles)
