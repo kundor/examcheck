@@ -221,6 +221,11 @@ def print_reports(reports):
         for stuid in reports:
             pop_print_report(studict[stuid])
 
+def reportmulti(stuid):
+    msg = 'Multiple files?'
+    if msg not in reports[stuid]:
+        reports[stuid].append(msg)
+
 def checkstuid(info, infos):
     codename, stuid, subid = fileinfo(info.filename)
     stuids[stuid] += 1
@@ -236,6 +241,8 @@ def checkstuid(info, infos):
         elif any(p.xlhash == info.xlhash for p in prev):
             print('This one is identical to a previously seen file for this student; ignoring.')
             return False
+        else:
+            reportmulti(stuid)
     return True
 
 def checksize(f):
