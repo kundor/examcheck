@@ -5,6 +5,7 @@ dateutil
 icdiff
 ipython
 keyring
+olefile
 openpyxl
 python-igraph
 requests

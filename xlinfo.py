@@ -9,6 +9,7 @@ from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 from datetime import datetime, timezone
 from contextlib import closing
+from olefile import OleFileIO
 
 # timing samples (S19 Mod3; Mod2):
 #  exiftool:                        12.180 s;  9.288 s
@@ -85,7 +86,7 @@ def get_name(filething):
     else:
         return '<Unknown>'
 
-def xml_props(ooxml, filename=None):
+def xml_props(ooxml, filename=None, *args):
     if filename is None:
         filename = get_name(ooxml)
     try:
@@ -105,7 +106,24 @@ def xml_props(ooxml, filename=None):
                 timeform(tags, 'created'),
                 tagval(tags, 'creator'),
                 timeform(tags, 'modified'),
-                tagval(tags, 'lastModifiedBy'))
+                tagval(tags, 'lastModifiedBy'),
+                *args)
+
+def ole_props(olefile, filename=None, *args):
+    if filename is None:
+        filename = get_name(olefile)
+    try:
+        with OleFileIO(olefile) as ole: # accepts path, file-like object, bytes
+            meta = ole.get_metadata()
+    except OSError as e:
+        print(filename, e, file=sys.stderr)
+        return
+    return Info(filename,
+            meta.create_time.replace(tzinfo=timezone.utc),
+            meta.author.decode(),
+            meta.last_saved_time.replace(tzinfo=timezone.utc),
+            meta.last_saved_by.decode(),
+            *args)
 
 def workbook_props(wb, filename, *args):
     """Get Info properties from open openpyxl workbook"""
