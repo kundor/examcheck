@@ -86,19 +86,19 @@ def get_name(filething):
     else:
         return '<Unknown>'
 
-def xml_props(ooxml, filename=None, *args):
+def xml_props(ooxfile, filename=None, *args):
     if filename is None:
-        filename = get_name(ooxml)
+        filename = get_name(ooxfile)
     try:
-        ooxml = ZipFile(ooxml, 'r')
+        ooxml = ZipFile(ooxfile, 'r')
     except BadZipFile as e:
         print(filename, 'is not a zip file?', e, file=sys.stderr)
-        return
+        return ole_props(ooxfile)
     try:
         prop = ooxml.open('docProps/core.xml', 'r')
     except KeyError:
         print('Metadata not found (file docProps/core.xml missing) in file ' + filename, file=sys.stderr)
-        return
+        return ole_props(ooxfile)
     tree = ET.parse(prop)
     tags = alltags(tree.getroot())
     with closing(prop), closing(ooxml):
