@@ -74,7 +74,7 @@ def get_args(argv=sys.argv):
     exdate = exams[0]['date']
     if argv[-1].endswith('.xlsx'):
         lastsub = len(argv) - 1
-        origfile = Path(argv[-1])
+        origfile = Path(argv[-1]).resolve()
     else:
         lastsub = len(argv)
         origfiles = list((basedir() / 'original').glob(f'Module_{modnum}_*.xlsx'))
