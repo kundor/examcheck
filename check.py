@@ -305,7 +305,7 @@ def reportinfo(info):
         reports[stuid].append('Metadata says unmodified')
     elif stat is Status.Boo:
         reports[stuid].append(f'Unmodified wrong spreadsheet? Last modified by {info.modder} on {info.modified:%x %X}')
-    if info.modified > examtime or info.modified < examtime - timedelta(days=9) and stat is not Status.Boo:
+    if info.modified > examtime + timedelta(days=1) or info.modified < examtime - timedelta(days=9) and stat is not Status.Boo:
         if not domodmsg:
             modmsg += ' by ' + info.modder
         modmsg += ' on ' + Fore.RED + f'{info.modified:%x}' + Fore.RESET
