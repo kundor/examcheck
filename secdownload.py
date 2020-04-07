@@ -53,7 +53,7 @@ with canvas_session() as s:
         signal.signal(signal.SIGINT, deferint)
 
         curi = (curi + 1) % len(curls)
-        for rj in follow_next(curls[curi]):
+        for rj in follow_next(s, curls[curi]):
             if deferint.nomore:
                 break
 
