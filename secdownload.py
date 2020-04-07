@@ -9,7 +9,7 @@ if len(sys.argv) > 1 and not sys.argv[-1].isdecimal():
     savedir = sys.argv.pop()
 
 try:
-    assids = {int(arg) for arg in sys.argv[1:]}
+    assids = [int(arg) for arg in sys.argv[1:]]
 except ValueError:
     sys.exit('Arguments must be [save directory] followed by upload assignment IDs (integers)')
 
