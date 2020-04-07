@@ -31,7 +31,7 @@ print('Saving to', savedir)
 rate = 15
 minrest = 5
 
-curls = [canvasbase + f'assignments/{assid}/submissions' for assid in assids]
+curls = [canvasbase + f'courses/{courseid}/assignments/{assid}/submissions' for assid in assids]
 
 studict = {stu['id'] : stu for stu in students}
 dnlds = {}
