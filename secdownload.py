@@ -31,13 +31,8 @@ print('Saving to', savedir)
 rate = 15
 minrest = 5
 
-#curls = [canvasbase + f'sections/{secid1}/assignments/{assid}/submissions',
-#         canvasbase + f'sections/{secid}/assignments/{assid}/submissions']
-curls = [canvasbase + f'sections/{secid}/assignments/{assid}/submissions' for assid in assids]
+curls = [canvasbase + f'assignments/{assid}/submissions' for assid in assids]
 
-section = sections[secid]
-#section1 = sections[secid1]
-mystuds = section['students'] # + section1['students']
 studict = {stu['id'] : stu for stu in students}
 dnlds = {}
 weirdids = {357062} # Test Student
@@ -47,7 +42,7 @@ os.chdir(savedir)
 
 with canvas_session() as s:
     curi = 0
-    while len(dnlds) < len(mystuds):
+    while True:
       try:
         start = time.time()
         signal.signal(signal.SIGINT, deferint)
