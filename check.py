@@ -4,7 +4,6 @@ import re
 import mmap
 import subprocess
 from hashlib import blake2b
-from pathlib import Path
 from operator import itemgetter
 from datetime import datetime, timedelta, timezone
 from contextlib import closing
