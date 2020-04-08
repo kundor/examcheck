@@ -331,94 +331,95 @@ def reportidentical(hasht):
 # I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
 # also re-download uniquecell cluster members.
 
-exams, subfiles, origfile = get_args()
+if __name__ == '__main__':
+    exams, subfiles, origfile = get_args()
 
-if inbasedir():
-    mdir = 'mod' + numsonly(exams[0]['name'])
-    changetodir(mdir)
-    print('Using directory ' + mdir, file=sys.stderr)
+    if inbasedir():
+        mdir = 'mod' + numsonly(exams[0]['name'])
+        changetodir(mdir)
+        print('Using directory ' + mdir, file=sys.stderr)
 
-if not inemptydir():
-    if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
-        sys.exit('Aborted.')
+    if not inemptydir():
+        if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
+            sys.exit('Aborted.')
 
-teachers = load_file('teachers.json', json.load)
-origcells, originfo = process_file(origfile)
+    teachers = load_file('teachers.json', json.load)
+    origcells, originfo = process_file(origfile)
 
-cellfiles = defaultdict(list) # map cell_content : files
-grades = fetch_grades([ex['quiz_id'] for ex in exams]) # map student_id : score
-stuids = Counter()
-xlhashes = {}
-reports = defaultdict(list) # map stuid : strings
+    cellfiles = defaultdict(list) # map cell_content : files
+    grades = fetch_grades([ex['quiz_id'] for ex in exams]) # map student_id : score
+    stuids = Counter()
+    xlhashes = {}
+    reports = defaultdict(list) # map stuid : strings
 
-examtime = datetime.combine(exams[0]['date'], Time(17)).astimezone(timezone.utc) # 5 pm
-if len({ex['date'] for ex in exams}) > 1:
-    print(f'Warning: exams on different dates. Using first exam {exams[0]["date"]}', file=sys.stderr)
+    examtime = datetime.combine(exams[0]['date'], Time(17)).astimezone(timezone.utc) # 5 pm
+    if len({ex['date'] for ex in exams}) > 1:
+        print(f'Warning: exams on different dates. Using first exam {exams[0]["date"]}', file=sys.stderr)
 
-warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
-warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
+    warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
+    warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
 
-infos = quickinfos(subfiles)
-for info in infos:
-    reportinfo(info)
+    infos = quickinfos(subfiles)
+    for info in infos:
+        reportinfo(info)
 
-print_reports(reports.copy())
-print('---------------------')
+    print_reports(reports.copy())
+    print('---------------------')
 
-for file in filesinzips(subfiles):
-    try:
-        info = next(i for i in infos if i.filename in (file.name, file.name + 'x'))
-        xlhash = info.xlhash
-    except StopIteration:
-        print(f'Could not find quickinfo for file {file.name}', file=sys.stderr)
-        info = None
-        xlhash = bsum_mem(file)
-    codename, stuid, subid = fileinfo(file.name)
-    size = filesize_mem(file)
-    if xlhash in xlhashes:
-        prev = xlhashes[xlhash]
-        print(f'File {file.name} identical to previously seen file {prev.filename}')
-        continue
-    if file.name.endswith('.xls'):
-        file = xls2xlsx(file)
-    elif not file.name.endswith('.xlsx'):
-        report_nonxlsx(file.name)
-        continue
-    try:
-        wb = load_workbook(file, read_only=True)
-    except Exception as e:
-        print(file.name, 'is not an xlsx file?', e, file=sys.stderr)
-        checktemp(file.name, size)
-        continue
-    thecells, theinfo = process_workbook(xlhash, file.name, wb)
-    for cval in thecells - origcells:
-        cellfiles[cval].append(file.name)
-    if info and info != theinfo.replace(csvhash='', simhash=0):
-        print('different Info:', info, theinfo, file=sys.stderr)
-    if info:
-        info.csvhash = theinfo.csvhash
-        info.simhash = theinfo.simhash
-    else:
-        infos.append(theinfo)
-    xlhashes[xlhash] = theinfo
-    if haslink(wb):
-        reports[stuid].append('Links to ' + links_desc(wb))
-    wb.close()
-    file.close()
+    for file in filesinzips(subfiles):
+        try:
+            info = next(i for i in infos if i.filename in (file.name, file.name + 'x'))
+            xlhash = info.xlhash
+        except StopIteration:
+            print(f'Could not find quickinfo for file {file.name}', file=sys.stderr)
+            info = None
+            xlhash = bsum_mem(file)
+        codename, stuid, subid = fileinfo(file.name)
+        size = filesize_mem(file)
+        if xlhash in xlhashes:
+            prev = xlhashes[xlhash]
+            print(f'File {file.name} identical to previously seen file {prev.filename}')
+            continue
+        if file.name.endswith('.xls'):
+            file = xls2xlsx(file)
+        elif not file.name.endswith('.xlsx'):
+            report_nonxlsx(file.name)
+            continue
+        try:
+            wb = load_workbook(file, read_only=True)
+        except Exception as e:
+            print(file.name, 'is not an xlsx file?', e, file=sys.stderr)
+            checktemp(file.name, size)
+            continue
+        thecells, theinfo = process_workbook(xlhash, file.name, wb)
+        for cval in thecells - origcells:
+            cellfiles[cval].append(file.name)
+        if info and info != theinfo.replace(csvhash='', simhash=0):
+            print('different Info:', info, theinfo, file=sys.stderr)
+        if info:
+            info.csvhash = theinfo.csvhash
+            info.simhash = theinfo.simhash
+        else:
+            infos.append(theinfo)
+        xlhashes[xlhash] = theinfo
+        if haslink(wb):
+            reports[stuid].append('Links to ' + links_desc(wb))
+        wb.close()
+        file.close()
 
-writeout()
-pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
-print_reports(reports.copy())
+    writeout()
+    pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
+    print_reports(reports.copy())
 
-reportidentical('xlhash')
-reportidentical('csvhash')
-reportidentical('simhash')
+    reportidentical('xlhash')
+    reportidentical('csvhash')
+    reportidentical('simhash')
 
-rpts = filerpts(cellfiles)
-most_shared(rpts, cellfiles)
-pairs_few(rpts, cellfiles)
+    rpts = filerpts(cellfiles)
+    most_shared(rpts, cellfiles)
+    pairs_few(rpts, cellfiles)
 
-IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
+    IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
 
 # Make command interpreter (import cmd)
 # <stu> is codename with tab-completion, or stuid
