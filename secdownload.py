@@ -28,8 +28,8 @@ if not savedir:
     savedir = 'mymod' + modnum
 print('Saving to', savedir)
 
-rate = 15
-minrest = 5
+rate = 30
+minrest = 10
 
 curls = [canvasbase + f'courses/{courseid}/assignments/{assid}/submissions' for assid in assids]
 
