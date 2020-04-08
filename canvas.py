@@ -86,6 +86,7 @@ def todays_exams():
     theexams = most_recent('exams.json')
     if theexams and yesno(f'Use assignments {listnames(theexams)} from {theexams[0]["date"]}? '):
         return theexams
+    return []
 
 def todays_ids(idtype):
     """Return exam IDs of given type (id or quiz_id) for today"""
