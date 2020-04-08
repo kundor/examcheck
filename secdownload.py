@@ -76,18 +76,19 @@ with canvas_session() as s:
                     continue
                 if numatt != 1:
                     print(f'{stu["name"]}: {numatt} attachments, ?')
-                dst = Path(f'{codename(stu)}_{sid}_' + sub['attachments'][-1]['filename'])
-                if dst.exists():
-                    print(dst, 'found')
-                    continue
-                url = sub['attachments'][-1]['url']
-                print('Fetching', dst, '... ', end='', flush=True)
-                with s.get(url, stream=True) as fileget, open(dst, 'wb') as out:
-                    shutil.copyfileobj(fileget.raw, out)
                 dnlds[sid] = numatt
-                print(f'done {len(dnlds)}.')
-                if deferint.nomore:
-                    break
+                for att in sub['attachments']:
+                    dst = Path(f'{codename(stu)}_{sid}_' + att['filename'])
+                    if dst.exists():
+                        print(dst, 'found')
+                        continue
+                    url = att['url']
+                    print('Fetching', dst, '... ', end='', flush=True)
+                    with s.get(url, stream=True) as fileget, open(dst, 'wb') as out:
+                        shutil.copyfileobj(fileget.raw, out)
+                    print(f'done {len(dnlds)}.')
+                    if deferint.nomore:
+                        break
 
         elapsed = time.time() - start
         signal.signal(signal.SIGINT, signal.default_int_handler)
