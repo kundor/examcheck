@@ -7,7 +7,7 @@ from collections import namedtuple
 from canvas import codename, students, alphaonly, load_file, yesno
 
 Status = Enum('Status', ('Found', 'Approved', 'DNE', 'Boo', 'Unknown'))
-FileInfo = namedtuple('FileInfo', ('codename', 'stuid', 'subid'))
+FileInfo = namedtuple('FileInfo', ('codename', 'stuid'))
 
 # Name equivalence classes
 namequivs = [{'Abby', 'Abigail'},
@@ -56,8 +56,8 @@ studict = {stu['id'] : stu for stu in students}
 
 def fileinfo(filename):
     """Get the metadata included in Canvas-generated filenames"""
-    codename, stuid, subid, *fn = filename.split('_')
-    return FileInfo(codename, int(stuid), int(subid))
+    codename, stuid, *fn = filename.split('_')
+    return FileInfo(codename, int(stuid))
 
 def namebag(name):
     name = re.sub("[,\./_-]", ' ', name.casefold()).replace("'", "").split()
@@ -211,7 +211,7 @@ if __name__ == '__main__':
         omodr = ''
         for line in inf:
             fields = line[:-1].split('\t')
-            name, stuid, subid = fileinfo(fields[0])
+            name, stuid = fileinfo(fields[0])
             modder = fields[6]
             if stuid == osid:
                 if modder == omodr:
