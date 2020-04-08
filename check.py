@@ -226,7 +226,7 @@ def reportmulti(stuid):
         reports[stuid].append(msg)
 
 def checkstuid(info, infos):
-    codename, stuid, subid = fileinfo(info.filename)
+    codename, stuid = fileinfo(info.filename)
     stuids[stuid] += 1
     if stuids[stuid] > 1:
         print(f'{codename} seen {stuids[stuid]} times')
@@ -273,7 +273,7 @@ def quickinfos(subfiles):
 
 def reportinfo(info):
     global originfo
-    codename, stuid, subid = fileinfo(info.filename)
+    codename, stuid = fileinfo(info.filename)
     docreatmsg = False
     creatmsg = 'Created'
     if info.creator != originfo.creator:
@@ -374,7 +374,7 @@ if __name__ == '__main__':
             print(f'Could not find quickinfo for file {file.name}', file=sys.stderr)
             info = None
             xlhash = bsum_mem(file)
-        codename, stuid, subid = fileinfo(file.name)
+        codename, stuid = fileinfo(file.name)
         size = filesize_mem(file)
         if xlhash in xlhashes:
             prev = xlhashes[xlhash]
