@@ -2,6 +2,7 @@
 
 import re
 import mmap
+import pickle
 import subprocess
 from hashlib import blake2b
 from operator import itemgetter
@@ -89,7 +90,7 @@ def get_args(argv=sys.argv):
         if not subfiles or not yesno(f'Using files {subfiles}. OK? '):
             sys.exit('Please specify downloaded submissions zip')
     print(f'Using quiz IDs {quizids}, submission zips {subfiles}, original file {origfile}', file=sys.stderr)
-    return exams, subfiles, origfile
+    return exams, subfiles, origfile, modnum
 
 def blakesum(buf):
     bsum = blake2b(buf, digest_size=24)
@@ -332,7 +333,7 @@ def reportidentical(hasht):
 # also re-download uniquecell cluster members.
 
 if __name__ == '__main__':
-    exams, subfiles, origfile = get_args()
+    exams, subfiles, origfile, modnum = get_args()
 
     if inbasedir():
         mdir = 'mod' + numsonly(exams[0]['name'])
@@ -406,6 +407,16 @@ if __name__ == '__main__':
             reports[stuid].append('Links to ' + links_desc(wb))
         wb.close()
         file.close()
+
+    pdata = {'origcells': origcells,
+            'originfo': originfo,
+            'cellfiles': cellfiles,
+            'xlhashes': xlhashes,
+            'infos': infos,
+            'reports': reports,
+            'grades': grades}
+    with open(f'modd{modnum}.pkl', 'wb') as fid:
+        pickle.dump(pdata, fid, protocol=pickle.HIGHEST_PROTOCOL)
 
     writeout()
     pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
