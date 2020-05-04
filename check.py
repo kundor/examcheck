@@ -337,8 +337,16 @@ if __name__ == '__main__':
 
     if inbasedir():
         mdir = 'mod' + numsonly(exams[0]['name'])
+        report = Path(mdir + '-report')
+        report.touch()
         changetodir(mdir)
         print('Using directory ' + mdir, file=sys.stderr)
+        report = Path(os.pardir) / report
+        Path('report').symlink_to(report)
+        Path('orig.xlsx').symlink_to(origfile)
+        if len(subfiles) == 1:
+            Path('subs.zip').symlink_to(subfiles[0])
+
 
     if not inemptydir():
         if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
