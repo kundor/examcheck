@@ -348,13 +348,11 @@ if __name__ == '__main__':
         if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
             sys.exit('Aborted.')
 
-    with suppress('FileExistsError'):
+    with suppress(FileExistsError):
         Path('orig.xlsx').symlink_to(origfile)
-    if len(subfiles) == 1:
-        with suppress('FileExistsError'):
+        if len(subfiles) == 1:
             Path('subs.zip').symlink_to(subfiles[0])
-    if report:
-        with suppress('FileExistsError'):
+        if report:
             Path('report').symlink_to(report)
 
     teachers = load_file('teachers.json', json.load)
