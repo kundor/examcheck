@@ -7,7 +7,7 @@ import subprocess
 from hashlib import blake2b
 from operator import itemgetter
 from datetime import datetime, timedelta, timezone
-from contextlib import closing
+from contextlib import closing, suppress
 from collections import Counter, defaultdict
 
 import simhash
@@ -348,11 +348,14 @@ if __name__ == '__main__':
         if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
             sys.exit('Aborted.')
 
-    Path('orig.xlsx').symlink_to(origfile)
+    with suppress('FileExistsError'):
+        Path('orig.xlsx').symlink_to(origfile)
     if len(subfiles) == 1:
-        Path('subs.zip').symlink_to(subfiles[0])
+        with suppress('FileExistsError'):
+            Path('subs.zip').symlink_to(subfiles[0])
     if report:
-        Path('report').symlink_to(report)
+        with suppress('FileExistsError'):
+            Path('report').symlink_to(report)
 
     teachers = load_file('teachers.json', json.load)
     origcells, originfo = process_file(origfile)
