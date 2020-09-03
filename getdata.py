@@ -371,7 +371,8 @@ def fetch_uploads(session, uploadsID):
 def fetch_exams(session, groupIDs):
     exams = []
     for gID in groupIDs:
-        exams += get_assignments(session, gID)
+        if gID:
+            exams += get_assignments(session, gID)
     badindices = []
     for n, exam in enumerate(exams):
         if not exam['quiz_id']:
