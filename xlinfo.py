@@ -118,12 +118,15 @@ def ole_props(olefile, filename=None, *args):
         print(filename, e, file=sys.stderr)
         return
     meta = ole.get_metadata()
-    return Info(filename,
-            meta.create_time.replace(tzinfo=timezone.utc),
-            meta.author.decode(),
-            meta.last_saved_time.replace(tzinfo=timezone.utc),
-            meta.last_saved_by.decode(),
-            *args)
+    try:
+        return Info(filename,
+                meta.create_time.replace(tzinfo=timezone.utc),
+                meta.author.decode(),
+                meta.last_saved_time.replace(tzinfo=timezone.utc),
+                meta.last_saved_by.decode(),
+                *args)
+    except AttributeError:
+        return
 
 def workbook_props(wb, filename, *args):
     """Get Info properties from open openpyxl workbook"""
