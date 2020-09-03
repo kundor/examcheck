@@ -11,8 +11,6 @@ import icdiff
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux')
 
-COORDINATOR = 'Joseph Timmer'
-
 def too_old(oldstamp, newstamp):
     return newstamp - oldstamp > 4*30*24*60*60 # 4 months
 

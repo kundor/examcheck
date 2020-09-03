@@ -4,7 +4,7 @@ import os
 import re
 from enum import Enum
 from collections import namedtuple
-from canvas import codename, students, alphaonly, load_file, yesno
+from canvas import COORDINATOR, codename, students, alphaonly, load_file, yesno
 
 Status = Enum('Status', ('Found', 'Approved', 'DNE', 'Boo', 'Unknown'))
 FileInfo = namedtuple('FileInfo', ('codename', 'stuid'))
@@ -153,7 +153,7 @@ def checkmodder(sid, modder):
     oldbags = [namebag(omod) for omod in modders[sid]]
     if modder in modders[sid]:
         return Status.Found
-    elif modder == 'Elizabeth L. Grulke':
+    elif modder == COORDINATOR:
         return Status.Boo
     elif modder in ('Microsoft Office User', 'Microsoft Office 用户'):
         return Status.Approved

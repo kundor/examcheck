@@ -16,6 +16,7 @@ if cuser:
 else:
     warnings.warn('Cannot find environment variable CANVASUSER', RuntimeWarning)
 
+COORDINATOR = 'Joseph Timmer'
 courseid = 65002
 secid = 37411 # 012
 sectime = Time(12) # section 012 at noon
