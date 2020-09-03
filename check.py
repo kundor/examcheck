@@ -201,7 +201,7 @@ def pop_print_report(reports, stu):
     except:
         score = ''
     namegrad = f"{stu.get('name','')} ({score})"
-    print(f'{secname:4} {namegrad:26} ' + ', '.join(reports.pop(stuid)))
+    print(f'{secname:4} {namegrad:26} ' + ', '.join(reports.pop(stuid, 'What?')))
 
 def dumb_lastname(tch):
     return tch['name'].split()[1]
@@ -381,6 +381,7 @@ if __name__ == '__main__':
     infos = quickinfos(subfiles)
     for info in infos:
         reportinfo(info)
+    writeout()
 
     print_reports(reports.copy())
     print('---------------------')
@@ -436,7 +437,6 @@ if __name__ == '__main__':
     with open(f'modd{modnum}.pkl', 'wb') as fid:
         pickle.dump(pdata, fid, protocol=pickle.HIGHEST_PROTOCOL)
 
-    writeout()
     pairs = simhash.find_all([i.simhash for i in infos], 6, 4) # blocks >= maxdist + 1; maxdist 1 to 64
     print_reports(reports.copy())
 
