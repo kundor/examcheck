@@ -11,6 +11,8 @@ import icdiff
 
 sys.excepthook = IPython.core.ultratb.FormattedTB(mode='Verbose', color_scheme='Linux')
 
+COORDINATOR = 'Joseph Timmer'
+
 def too_old(oldstamp, newstamp):
     return newstamp - oldstamp > 4*30*24*60*60 # 4 months
 
@@ -237,18 +239,19 @@ def isodate(jsondate):
     return isoparse(jsondate).astimezone().date().isoformat()
 
 def restrict_boo(teachers):
-    """Remove Boo from all sections unless she's the only teacher"""
+    """Remove coordinator from all sections unless she's the only teacher"""
     osecs = [] # all sections with a teacher other than Boo
     for t in teachers:
-        if t['name'] == 'Elizabeth Grulke':
+        if t['name'] == COORDINATOR:
             continue
         osecs += t['sections']
     for t in teachers:
-        if t['name'] == 'Elizabeth Grulke':
+        if t['name'] == COORDINATOR:
             t['sections'] = [sec for sec in t['sections'] if sec not in osecs]
 
 def confirm_sections(sectch, teachers):
     """Prompt for any changes to teacher assignments"""
+    teachnames = [t['name'] for t in teachers]
     for sec in sorted(sectch):
        print(f"{sec}: {sectch[sec]}")
 
@@ -260,7 +263,7 @@ def confirm_sections(sectch, teachers):
             print("Not a section. (Enter nothing to continue)")
             continue
         newname = input('Correct teacher? ')
-        if newname not in sectch.values():
+        if newname not in teachnames:
             print('Not a teacher?!?')
             continue
         oldteacher = next(t for t in teachers if t['name'] == sectch[secnum])
