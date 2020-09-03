@@ -27,8 +27,8 @@ def stream_grades(session, quizid, seenscores={}):
             if not isinstance(thescore, float):
                 print(f'Some crazy score {thescore} for {stuname}', file=sys.stderr)
                 continue
-            if not thescore.is_integer():
-                print(f'Not integer score {thescore} for {sid}', file=sys.stderr)
+#            if not thescore.is_integer():
+#                print(f'Not integer score {thescore} for {sid}', file=sys.stderr)
             if sid in seenscores:
                 if seenscores[sid] == thescore:
                     print(f'Same score {thescore} seen again for {stuname}', file=sys.stderr)
@@ -36,7 +36,7 @@ def stream_grades(session, quizid, seenscores={}):
                 print(f'Different score {thescore} seen for {stuname}, previously {seenscores[sid]}', file=sys.stderr)
                 if thescore < seenscores[sid]:
                     continue # keep max score in dictionary and output
-            yield sid, round(thescore)
+            yield sid, thescore
             seenscores[sid] = thescore
 
 def print_grades(session, quizid):
