@@ -420,7 +420,7 @@ if __name__ == '__main__':
     if yesno('Create all-modder with full names? '):
         with open('all-modder', 'wt') as fid:
             for stu in studentinf:
-                fid.write(stu['id'] + '\t' + stu['name'] + '\n')
+                fid.write(f"{stu['id']}\t{stu['name']}\n")
     else:
         print('Not making all-modder. (`cut -f -2 allnames > all-modder` has same effect)')
 
