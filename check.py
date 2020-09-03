@@ -285,7 +285,9 @@ def reportinfo(info):
         creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
     if info.creation != originfo.creation:
         docreatmsg = True
-        if abs(info.creation - originfo.creation) < timedelta(days=1):
+        if not isinstance(info.creation, datetime):
+            creatmsg += ' on ' + Fore.RED + f'{info.creation}' + Fore.RESET
+        elif abs(info.creation - originfo.creation) < timedelta(days=1):
             creatmsg += ' on ' + Fore.RED + f'{info.creation:%x %X}' + Fore.RESET
         else:
             creatmsg += ' on ' + Fore.RED + f'{info.creation:%x}' + Fore.RESET
