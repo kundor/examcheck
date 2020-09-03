@@ -35,7 +35,7 @@ def ask_wipe():
     now = time.time()
     newest = max(os.path.getmtime(info) for info in info_files)
     if too_old(newest, now) or semester_break(newest, now):
-        if yesno('It might be a new semester. Wipe data and start fresh? ')
+        if yesno('It might be a new semester. Wipe data and start fresh? '):
             for info in info_files:
                 os.remove(info)
         else:
