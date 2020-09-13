@@ -115,8 +115,11 @@ def xls2xlsx(fdata):
         print(f'{filename}x found', file=sys.stderr)
     else:
         print(f'Converting {filename} to xlsx', file=sys.stderr)
-        with open(filename, 'xb') as out:
-            out.write(fdata.getbuffer())
+        try:
+            with open(filename, 'xb') as out:
+                out.write(fdata.getbuffer())
+        except FileExistsError:
+            print(f'XLS file {filename} already present'}
         fdata.close()
         if get_mime(filename) == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
             print("Appears to be misnamed .xlsx file", file=sys.stderr)
