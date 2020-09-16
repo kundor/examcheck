@@ -63,7 +63,7 @@ def load_grades(localfile):
     with open(localfile, 'rt') as fid:
         for line in fid:
             stuid, score = line.split('\t')
-            thescores[int(stuid)] = int(score)
+            thescores[int(stuid)] = score
     return thescores
 
 def fetch_grades(quizids, localfile='grades'):
