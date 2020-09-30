@@ -328,7 +328,8 @@ def reportidentical(hasht):
     for shash, count in hashes.most_common():
         if count <= 1:
             break
-        print(f'Identical {hasht}: ' + ', '.join(i.filename for i in infos if i.asdict()[hasht] == shash))
+        indent = '\n' + ' '*(12 + len(hasht))
+        print(f'Identical {hasht}: ' + indent.join(i.filename for i in infos if i.asdict()[hasht] == shash))
 
 # TODO: download the submissions here
 # Note: assignment json has a submissions_download_url which is purported to let you download the zip of all submissions
