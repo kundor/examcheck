@@ -2,7 +2,7 @@
 
 from canvas import *
 from datetime import datetime, timedelta, timezone
-from getdata import getoverrides
+from getdata import get_overrides
 
 # extra_time_IDs = [ 308978 ]
 
@@ -62,7 +62,7 @@ def set_all_exams(session, secid=secid, sectime=sectime, extraIDs=[]):
     for exam in exams:
         if not exam['date'] or '(*V*)' in exam['name']:
             continue
-        overs = getoverrides(session, exam['id'])
+        overs = get_overrides(session, exam['id'])
         matchover = matched_section(overs, secid)
         if matchover:
             endtimes = matchover["lock_at"]
