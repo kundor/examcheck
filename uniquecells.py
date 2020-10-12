@@ -47,7 +47,7 @@ def most_shared(rpts, cellfiles):
             break
         susp = list(ff)
         thecels = [c for c in cellfiles if cellfiles[c] == susp]
-        notnums = [c for c in thecels if not numpat.fullmatch(c)]
+        notnums = [c for c in thecels if not (numpat.fullmatch(c) or datepat.fullmatch(c))]
         if any(notnums):
             print(f'{susp}: {numshared} matches')
             print(notnums)
