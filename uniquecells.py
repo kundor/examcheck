@@ -15,6 +15,7 @@ refpat = re.compile(r"\$?\b[A-Z]{1,2}\$?[1-9][0-9]{0,4}\b")
 colpat = re.compile(r"(?<![:$])(\$?\b[A-Z]{1,2}):\1\b")
 rowpat = re.compile(r"(?<![:$])\b(\$?[1-9][0-9]{0,4}):\1\b(?!:)")
 numpat = re.compile(r'-?[0-9]+\.?[0-9]+')
+datepat = re.compile(r"(19|20)[0-9]{2}-(0[0-9]|1[0-2])-([012][0-9]|3[01]) ([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]")
 
 def cleanval(cellval):
     cval = str(cellval)
