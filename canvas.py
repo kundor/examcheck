@@ -18,8 +18,8 @@ else:
 
 COORDINATOR = 'Joseph Timmer'
 courseid = 65002
-secid = 37411 # 012
-sectime = Time(12) # section 012 at noon
+#secid = 37411 # 012
+#sectime = Time(12) # section 012 at noon
 canvasbase = 'https://canvas.colorado.edu/api/v1/'
 
 def canvas_session():
