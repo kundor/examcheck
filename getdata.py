@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import re
 from colorama import Fore
 import IPython
 from canvas import *

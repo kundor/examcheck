@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import re
 import mmap
 import pickle
 import subprocess

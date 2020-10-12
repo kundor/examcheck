@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import time
@@ -111,5 +112,7 @@ def load_file(filename, loader):
 
 sections = load_file('sections.json', json.load) # None, if it can't be found
 if sections:
+    for sec in sections:
+        sec['shortname'] = re.search('[^-]*$', sec['name']).group()
     sections = {sec['id'] : sec for sec in sections}
 students = load_file('students.json', json.load)
