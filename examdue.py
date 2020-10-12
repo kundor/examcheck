@@ -29,9 +29,10 @@ def set_exam_due(session, exam, extra_time_IDs=[], secid=secid, sectime=sectime)
     print(response.json())
     if not extra_time_IDs:
         return
+    secname = section_name(secid)
     response = session.post(curl, data={
         'assignment_override[student_ids][]': extra_time_IDs,
-        'assignment_override[title]': '012 Extra time',
+        'assignment_override[title]': secname + ' Extra time',
         'assignment_override[due_at]': extraend,
         'assignment_override[lock_at]': extraend,
         'assignment_override[unlock_at]': begin})
@@ -87,4 +88,4 @@ if __name__ == '__main__':
     myexam = {'id': assid, 'quiz_id': quizid, 'date': date}
 
     with canvas_session() as session:
-        set_exam_due(session, exam, extra_time_IDs)
+        set_exam_due(session, myexam, extra_time_IDs)
