@@ -13,6 +13,15 @@ def combine(date, time_of_day, delta=timedelta(0)):
     iso = dt.astimezone(timezone.utc).isoformat()
     return iso.replace('+00:00', 'Z')
 
+def extend_time(session, exam, student_id, secid, minutes=30):
+    """Extend allowed time for one student (does not affect due time)"""
+    curl = canvasbase + f'courses/{courseid}/quizzes/{exam["quiz_id"]}/extensions'
+    response = session.post(curl, data={
+        'quiz_extensions[][user_id]': student_id,
+        'quiz_extensions[][extra_time]': minutes})
+    print(response, '\n', response.json())
+
+
 def set_exam_due(session, exam, extra_time_IDs=[], secid=secid, sectime=sectime):
     curl = canvasbase + f'courses/{courseid}/assignments/{exam["id"]}/overrides'
     duedelta = timedelta(hours=1)
@@ -39,11 +48,7 @@ def set_exam_due(session, exam, extra_time_IDs=[], secid=secid, sectime=sectime)
     print(response)
     print(response.json())
     for sid in extra_time_IDs:
-        curl = canvasbase + f'courses/{courseid}/quizzes/{exam["quiz_id"]}/extensions'
-        response = session.post(curl, data={
-            'quiz_extensions[][user_id]': sid,
-            'quiz_extensions[][extra_time]': 25})
-        print(response, '\n', response.json())
+        extend_time(session, exam, sid, secid, 25)
 
 def is_section(override, secid):
     return 'course_section_id' in override and override['course_section_id'] == secid
