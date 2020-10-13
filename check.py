@@ -277,22 +277,28 @@ def quickinfos(subfiles):
             checktemp(f.name, filesize_mem(f))
     return infos
 
-def reportinfo(info):
+def reportinfo(info, self_created_ok=False):
     global originfo
     codename, stuid = fileinfo(info.filename)
     docreatmsg = False
     creatmsg = 'Created'
     if info.creator != originfo.creator:
-        docreatmsg = True
-        creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
-    if info.creation != originfo.creation:
-        docreatmsg = True
-        if not isinstance(info.creation, datetime):
-            creatmsg += ' on ' + Fore.RED + f'{info.creation}' + Fore.RESET
-        elif abs(info.creation - originfo.creation) < timedelta(days=1):
-            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x %X}' + Fore.RESET
+        if self_created_ok and info.creator == info.modder:
+            pass
         else:
-            creatmsg += ' on ' + Fore.RED + f'{info.creation:%x}' + Fore.RESET
+            docreatmsg = True
+            creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
+    if info.creation != originfo.creation:
+        if self_created_ok and isinstance(info.creation, datetime) and info.creation > examtime - timedelta(days=9):
+            pass
+        else:
+            docreatmsg = True
+            if not isinstance(info.creation, datetime):
+                creatmsg += ' on ' + Fore.RED + f'{info.creation}' + Fore.RESET
+            elif abs(info.creation - originfo.creation) < timedelta(days=1):
+                creatmsg += ' on ' + Fore.RED + f'{info.creation:%x %X}' + Fore.RESET
+            else:
+                creatmsg += ' on ' + Fore.RED + f'{info.creation:%x}' + Fore.RESET
     if docreatmsg:
         reports[stuid].append(creatmsg)
 
@@ -358,6 +364,9 @@ if __name__ == '__main__':
         if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
             sys.exit('Aborted.')
 
+    if modnum == 5:
+        print(f'Assuming self-created is okay for module {modnum}')
+
     with suppress(FileExistsError):
         Path('orig.xlsx').symlink_to(origfile)
         if len(subfiles) == 1:
@@ -383,7 +392,7 @@ if __name__ == '__main__':
 
     infos = quickinfos(subfiles)
     for info in infos:
-        reportinfo(info)
+        reportinfo(info, modnum == 5)
     writeout()
 
     print_reports(reports.copy())
