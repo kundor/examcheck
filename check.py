@@ -364,8 +364,11 @@ if __name__ == '__main__':
         if not yesno(f'Current directory {curdir()} is not empty. Proceed (may clobber files)? '):
             sys.exit('Aborted.')
 
-    if modnum == 5:
+    if modnum == '5':
         print(f'Assuming self-created is okay for module {modnum}')
+        self_created_ok = True
+    else:
+        self_created_ok = False
 
     with suppress(FileExistsError):
         Path('orig.xlsx').symlink_to(origfile)
@@ -392,7 +395,7 @@ if __name__ == '__main__':
 
     infos = quickinfos(subfiles)
     for info in infos:
-        reportinfo(info, modnum == 5)
+        reportinfo(info, self_created_ok)
     writeout()
 
     print_reports(reports.copy())
