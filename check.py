@@ -70,6 +70,8 @@ def get_args(argv=sys.argv):
     if not exams:
         sys.exit('Could not find any quiz IDs. ' + USAGE)
     modnum = numsonly(exams[0]['name'])
+    if 'Final' in exams[0]['name']:
+        modnum = '11'
     exdate = exams[0]['date']
     if argv[-1].endswith('.xlsx'):
         lastsub = len(argv) - 1
@@ -353,7 +355,7 @@ if __name__ == '__main__':
     report = None
 
     if inbasedir():
-        mdir = 'mod' + numsonly(exams[0]['name'])
+        mdir = 'mod' + modnum
         report = Path(mdir + '-report')
         report.touch()
         changetodir(mdir)
