@@ -19,9 +19,10 @@ else:
 
 COORDINATOR = 'Joseph Timmer'
 # COORDINATOR = 'Elizabeth L. Grulke'
-courseid = 65002
-#secid = 37411 # 012
-#sectime = Time(12) # section 012 at noon
+courseid = 70043 # Math 1112-REMOTE
+# courseid = 70047 # Math 1112-ONLINE
+#secid = 57825 # 009
+#sectime = Time(11, 30) # section 009 at 11:30
 canvasbase = 'https://canvas.colorado.edu/api/v1/'
 
 def canvas_session():
