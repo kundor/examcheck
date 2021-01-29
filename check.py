@@ -197,6 +197,15 @@ def checktemp(filename, size):
     else:
         reports[stuid].append(f'Not an Excel file? {filename}')
 
+def section_createtime(secname, create_date):
+    """The expected creation time of the file distributed to the given section"""
+    section = numsonly(secname)
+    if len(section) != 3:
+        print('Section is not three digits as expected')
+    hour = int(section[0])
+    minute = int(section[1:])
+    return datetime.combine(create_date, Time(hour, minute)).astimezone(timezone.utc)
+
 def pop_print_report(reports, stu):
     secname = stu.get('section','')
     stuid = stu['id']
