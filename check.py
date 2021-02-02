@@ -395,7 +395,7 @@ if __name__ == '__main__':
     sec_creat = {sec['shortname'] : section_createtime(sec['shortname'], originfo.creation.date()) for sec in sections.values()}
 
     cellfiles = defaultdict(list) # map cell_content : files
-    grades = fetch_grades([ex['quiz_id'] for ex in exams]) # map student_id : score
+    grades = fetch_grades([(ex['course_id'], ex['quiz_id']) for ex in exams]) # map student_id : score
     stuids = Counter()
     xlhashes = {}
     reports = defaultdict(list) # map stuid : strings

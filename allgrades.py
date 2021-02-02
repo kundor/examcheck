@@ -4,9 +4,9 @@ from canvas import *
 
 studict = {stu['id'] : stu['name'] for stu in students}
 
-def stream_grades(session, quizid, seenscores={}):
+def stream_grades(session, courseid, quizid, seenscores={}):
     # Passing the same seenscores dict for multiple invocations will update the scores
-    # The default seenscores, with no third argument, persists across all such invocations
+    # The default seenscores, with no fourth argument, persists across all such invocations
     # (So if you use this for non-equivalent assignments, you must pass a score dict)
     curl = f'courses/{courseid}/quizzes/{quizid}/submissions'
     for json in follow_next(session, curl):
@@ -39,15 +39,15 @@ def stream_grades(session, quizid, seenscores={}):
             yield sid, thescore
             seenscores[sid] = thescore
 
-def print_grades(session, quizid):
-    for sid, score in stream_grades(session, quizid):
+def print_grades(session, courseid, quizid):
+    for sid, score in stream_grades(session, courseid, quizid):
         print(f"{sid}\t{score}")
 
-def all_grades(quizids):
+def all_grades(course_quiz_ids):
     scores = {}
     with canvas_session() as session:
-        for quizid in quizids:
-            scores.update(stream_grades(session, quizid))
+        for (courseid, quizid) in course_quiz_ids:
+            scores.update(stream_grades(session, courseid, quizid))
     return scores
 
 def grades_found(localfile):
@@ -66,28 +66,28 @@ def load_grades(localfile):
             thescores[stuid] = score
     return thescores
 
-def fetch_grades(quizids, localfile='grades'):
+def fetch_grades(course_quiz_ids, localfile='grades'):
     if grades_found(localfile):
         print(f'Not fetching grades, using file {localfile}', file=sys.stderr)
         return load_grades(localfile)
     scores = {}
     with open(localfile, 'wt') as fid, canvas_session() as session:
-        for quizid in quizids:
-            for sid, score in stream_grades(session, quizid, scores):
+        for (courseid, quizid) in course_quiz_ids:
+            for sid, score in stream_grades(session, courseid, quizid, scores):
                 print(f'{sid}\t{score}', file=fid)
     return scores
 
 if __name__ == '__main__':
     try:
-        quizids = {int(arg) for arg in sys.argv[1:]}
+        course_quiz_ids = {int(arg) for arg in sys.argv[1:]}
     except ValueError:
-        sys.exit('Arguments must be quiz IDs (integers)')
+        sys.exit('Arguments must be course and quiz IDs in pairs (integers)')
     if not quizids:
-        quizids = todays_ids('quiz_id')
-    if not quizids:
+        course_quiz_ids = todays_ids('quiz_id')
+    if not course_quiz_ids:
        sys.exit('Must specify at least one quiz ID')
 
     with canvas_session() as s:
-        for quizid in quizids:
-            print_grades(s, quizid)
+        for (courseid, quizid) in course_quiz_ids:
+            print_grades(s, courseid, quizid)
 

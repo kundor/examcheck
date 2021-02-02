@@ -94,7 +94,7 @@ def todays_exams():
 
 def todays_ids(idtype):
     """Return exam IDs of given type (id or quiz_id) for today"""
-    return [e[idtype] for e in todays_exams()]
+    return [(e['course_id'], e[idtype]) for e in todays_exams()]
 
 def get_fid(filename):
     """Try to open a file in the current directory, parent directory, or this file's location."""
