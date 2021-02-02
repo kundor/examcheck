@@ -299,7 +299,14 @@ def reportinfo(info, self_created_ok=False):
         else:
             docreatmsg = True
             creatmsg += ' by ' + Fore.RED + info.creator + Fore.RESET
-    if info.creation != originfo.creation:
+
+    stat = checkadd(stuid, info.modder)
+    # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
+    if stat is Status.DNE:
+        return
+    stu = studict[stuid]
+
+    if info.creation != sec_creat[stu['section']]:
         if self_created_ok and isinstance(info.creation, datetime) and info.creation > examtime - timedelta(days=9):
             pass
         else:
@@ -315,11 +322,6 @@ def reportinfo(info, self_created_ok=False):
 
     domodmsg = False
     modmsg = 'Last modified'
-    stat = checkadd(stuid, info.modder)
-    # Status.Found, Status.Boo, Status.DNE, Status.Approved, Status.Unknown
-    if stat is Status.DNE:
-        return
-    stu = studict[stuid]
     if stat is Status.Unknown:
         domodmsg = True
         modmsg += ' by ' + Fore.RED + info.modder + Fore.RESET
@@ -390,6 +392,7 @@ if __name__ == '__main__':
 
     teachers = load_file('teachers.json', json.load)
     origcells, originfo = process_file(origfile)
+    sec_creat = {sec['shortname'] : section_createtime(sec['shortname'], originfo.creation.date()) for sec in sections.values()}
 
     cellfiles = defaultdict(list) # map cell_content : files
     grades = fetch_grades([ex['quiz_id'] for ex in exams]) # map student_id : score
