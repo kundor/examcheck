@@ -9,11 +9,16 @@ rate = 20 # seconds between requests
 minrest = 5 # wait at least this long (if a request took a long time)
 
 try:
-    assids = {int(arg) for arg in sys.argv[1:]}
+    courseid = int(sys.argv[1])
+    assids = {int(arg) for arg in sys.argv[2:]}
 except ValueError:
-    sys.exit('Arguments must be assignment IDs (integers)')
+    sys.exit('Arguments must be course ID followed by assignment IDs (integers)')
 if not assids:
-    assids = todays_ids('id')
+    course_ass_ids = todays_ids('id')
+    courseids = {ca[0] for ca in course_ass_ids}
+    assert len(courseids) == 1
+    courseid = courseids.pop()
+    assids = {ca[1] for ca in course_ass_ids}
 if not assids:
    sys.exit('Must specify at least one assignment ID')
 
