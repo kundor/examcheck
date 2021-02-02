@@ -19,8 +19,8 @@ else:
 
 COORDINATOR = 'Joseph Timmer'
 # COORDINATOR = 'Elizabeth L. Grulke'
-courseid = 70043 # Math 1112-REMOTE
-# courseid = 70047 # Math 1112-ONLINE
+courseids = [70043, # Math 1112-REMOTE
+             70047] # Math 1112-ONLINE
 #secid = 57825 # 009
 #sectime = Time(11, 30) # section 009 at 11:30
 canvasbase = 'https://canvas.colorado.edu/api/v1/'

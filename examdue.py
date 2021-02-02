@@ -15,7 +15,7 @@ def combine(date, time_of_day, delta=timedelta(0)):
 
 def extend_time(session, exam, student_id, secid, minutes=30):
     """Extend allowed time for one student (does not affect due time)"""
-    curl = canvasbase + f'courses/{courseid}/quizzes/{exam["quiz_id"]}/extensions'
+    curl = canvasbase + f'courses/{exam["course_id"]}/quizzes/{exam["quiz_id"]}/extensions'
     response = session.post(curl, data={
         'quiz_extensions[][user_id]': student_id,
         'quiz_extensions[][extra_time]': minutes})
@@ -23,7 +23,7 @@ def extend_time(session, exam, student_id, secid, minutes=30):
 
 
 def set_exam_due(session, exam, extra_time_IDs=[], secid=secid, sectime=sectime):
-    curl = canvasbase + f'courses/{courseid}/assignments/{exam["id"]}/overrides'
+    curl = canvasbase + f'courses/{exam["course_id"]}/assignments/{exam["id"]}/overrides'
     duedelta = timedelta(hours=1)
     extradelta = timedelta(hours=1.5)
     begin = combine(exam['date'], sectime)
@@ -68,7 +68,7 @@ def set_all_exams(session, secid=secid, sectime=sectime, extraIDs=[]):
     for exam in exams:
         if not exam['date'] or '(*V*)' in exam['name']:
             continue
-        overs = get_overrides(session, exam['id'])
+        overs = get_overrides(session, exam['course_id'], exam['id'])
         matchover = matched_section(overs, secid)
         if matchover:
             endtimes = matchover["lock_at"]
@@ -82,15 +82,16 @@ def set_all_exams(session, secid=secid, sectime=sectime, extraIDs=[]):
 
 if __name__ == '__main__':
     try:
-        assid = int(sys.argv[1])
-        quizid = int(sys.argv[2])
-        date = isoparse(sys.argv[3])
-        if len(sys.argv) > 4:
-            extra_time_IDs = [int(arg) for arg in sys.argv[4:]]
+        courseid = int(sys.argv[1])
+        assid = int(sys.argv[2])
+        quizid = int(sys.argv[3])
+        date = isoparse(sys.argv[4])
+        if len(sys.argv) > 5:
+            extra_time_IDs = [int(arg) for arg in sys.argv[5:]]
     except (ValueError, IndexError):
-        sys.exit(f'Usage: {sys.argv[0]} <assid> <quizid> <date> [extra-time IDs...]')
+        sys.exit(f'Usage: {sys.argv[0]} <courseid> <assid> <quizid> <date> [extra-time IDs...]')
 
-    myexam = {'id': assid, 'quiz_id': quizid, 'date': date}
+    myexam = {'course_id': courseid, 'id': assid, 'quiz_id': quizid, 'date': date}
 
     with canvas_session() as session:
         set_exam_due(session, myexam, extra_time_IDs)

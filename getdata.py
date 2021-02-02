@@ -291,7 +291,7 @@ def get_assignments(session, groupid):
     keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id')
     return [{key : a.get(key) for key in keys} for a in asses]
 
-def get_overrides(session, assid):
+def get_overrides(session, courseid, assid):
     curl = canvasbase + f'courses/{courseid}/assignments/{assid}/overrides'
     with session.get(curl) as response:
         return response.json()
