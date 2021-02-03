@@ -313,8 +313,6 @@ def fetch_teachers(session):
                                  ee['sis_section_id'][17:21].rstrip('-')) for ee in tch['enrollments']]
         thesections = sorted(thesections, key=itemgetter(2))
         teachers += [{'id': tID, 'name': tname, 'sections': thesections}]
-        except KeyError:
-            print('Problem with record:', tch)
 
     restrict_boo(teachers)
     sectch = {sec[2]: tch['name'] for tch in teachers for sec in tch['sections']}
