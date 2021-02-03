@@ -415,10 +415,10 @@ if __name__ == '__main__':
         studict = {stu['id'] : stu for stu in studentinf}
         sections = fetch_sections(session, studentinf, sectch, studict)
         for cID in courseids:
-            examsID, uploadsID, finalid = fetch_groups(session, cID)
+            examsID, uploadsID, finalID = fetch_groups(session, cID)
             # pairs with course_id, group_id
             uploads = fetch_uploads(session, uploadsID) 
-            exams = fetch_exams(session, [examsID, finalid])
+            exams = fetch_exams(session, [examsID, finalID])
 
     allnames = [{'sid': stu['id'], 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(str(s[k]) for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
