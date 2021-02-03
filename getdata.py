@@ -310,7 +310,7 @@ def fetch_teachers(session):
             if tch['id'] == tID:
                 thesections += [(ee['course_id'],
                                  ee['course_section_id'],
-                                 ee['sis_section_id'][17:21].rstrip('-')) for ee in tch['enrollments']
+                                 ee['sis_section_id'][17:21].rstrip('-')) for ee in tch['enrollments']]
         thesections = sorted(thesections, key=itemgetter(2))
         teachers += [{'id': tID, 'name': tname, 'sections': thesections}]
         except KeyError:
