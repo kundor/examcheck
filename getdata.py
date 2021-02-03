@@ -291,7 +291,7 @@ def get_assignments(session, courseid, groupid):
     curl = canvasbase + f'courses/{courseid}/assignment_groups/{groupid}'
     with session.get(curl, params={'include[]': 'assignments'}) as response:
         asses = response.json()['assignments']
-    keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id')
+    keys = ('id', 'due_at', 'unlock_at', 'lock_at', 'name', 'quiz_id', 'course_id')
     return [{key : a.get(key) for key in keys} for a in asses]
 
 def get_overrides(session, courseid, assid):
@@ -350,27 +350,37 @@ def fetch_sections(session, studentinf, sectch, studict):
     diffwrite('sections.json', sections, format_sections(sections))
     return sections
 
-def fetch_groups(session, courseid):
-    curl = canvasbase + f'courses/{courseid}/assignment_groups'
-    with session.get(curl) as response:
-        assgroups = response.json()
-    agm = {ag['name'] : ag['id'] for ag in assgroups}
-    examid = (courseid, askkey(agm, 'Module Exams', 'module exams'))
-    #altid = (courseid, askkey(agm, 'Alternate', 'alternate exams'))
-    uploadid = (courseid, askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads'))
-    finalid = (courseid, askkey(agm, 'Final Exam', 'the final exam'))
-    for ag in assgroups:
-        ag['course_id'] = courseid
-    diffwrite('groups.json', assgroups)
-    return examid, uploadid, finalid
+def fetch_groups(session):
+    allgroups = []
+    examIDs = []
+    uploadIDs = []
+    finalIDs = []
+    for courseid in courseids:
+        curl = canvasbase + f'courses/{courseid}/assignment_groups'
+        with session.get(curl) as response:
+            assgroups = response.json()
+        for ag in assgroups:
+            ag['course_id'] = courseid
+        agm = {ag['name'] : ag['id'] for ag in assgroups}
+        examid = askkey(agm, 'Module Exams', 'module exams')
+        uploadid = askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads')
+        finalid = askkey(agm, 'Final Exam', 'the final exam')
+        examIDs.append((courseid, examid))
+        uploadIDs.append((courseid, uploadid))
+        finalIDs.append((courseid, finalid))
+        allgroups += assgroups
+    diffwrite('groups.json', allgroups)
+    return examIDs, uploadIDs, finalIDs
 
-def fetch_uploads(session, uploadsID):
-    rawuploads = get_assignments(session, *uploadsID)
-    uploads = [{'name': up['name'],
-        'id': up['id'],
-        'date': isodate(up['lock_at']),
-        'course_id': uploadsID[0]}
-        for up in rawuploads]
+def fetch_uploads(session, uploadsIDs):
+    uploads = []
+    for (cID, gID) in uploadsIDs:
+        rawuploads = get_assignments(session, cID, gID)
+        uploads += [{'name': up['name'],
+            'id': up['id'],
+            'date': isodate(up['lock_at']),
+            'course_id': cID}
+            for up in rawuploads]
     diffwrite('uploads.json', uploads)
     return uploads
 
@@ -378,10 +388,7 @@ def fetch_exams(session, course_group_IDs):
     exams = []
     for (cID, gID) in course_group_IDs:
         if gID:
-            rawexams = get_assignments(session, cID, gID)
-            for ex in rawexams:
-                ex['course_id'] = cID
-            exams += rawexams
+            exams += get_assignments(session, cID, gID)
     badindices = []
     for n, exam in enumerate(exams):
         if not exam['quiz_id']:
@@ -414,11 +421,10 @@ if __name__ == '__main__':
         studentinf = fetch_students(session)
         studict = {stu['id'] : stu for stu in studentinf}
         sections = fetch_sections(session, studentinf, sectch, studict)
-        for cID in courseids:
-            examsID, uploadsID, finalID = fetch_groups(session, cID)
-            # pairs with course_id, group_id
-            uploads = fetch_uploads(session, uploadsID) 
-            exams = fetch_exams(session, [examsID, finalID])
+        examsIDs, uploadsIDs, finalIDs = fetch_groups(session)
+        # pairs with course_id, group_id
+        uploads = fetch_uploads(session, uploadsIDs) 
+        exams = fetch_exams(session, [*examsIDs, *finalIDs])
 
     allnames = [{'sid': stu['id'], 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(str(s[k]) for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
