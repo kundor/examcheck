@@ -355,13 +355,13 @@ def fetch_groups(session, courseid):
         assgroups = response.json()
     agm = {ag['name'] : ag['id'] for ag in assgroups}
     examid = (courseid, askkey(agm, 'Module Exams', 'module exams'))
-    altid = (courseid, askkey(agm, 'Alternate', 'alternate exams'))
+    #altid = (courseid, askkey(agm, 'Alternate', 'alternate exams'))
     uploadid = (courseid, askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads'))
     finalid = (courseid, askkey(agm, 'Final Exam', 'the final exam'))
     for ag in assgroups:
         ag['course_id'] = courseid
     diffwrite('groups.json', assgroups)
-    return examid, altid, uploadid, finalid
+    return examid, uploadid, finalid
 
 def fetch_uploads(session, uploadsID):
     rawuploads = get_assignments(session, *uploadsID)
@@ -414,10 +414,10 @@ if __name__ == '__main__':
         studict = {stu['id'] : stu for stu in studentinf}
         sections = fetch_sections(session, studentinf, sectch, studict)
         for cID in courseids:
-            examsID, altsID, uploadsID, finalid = fetch_groups(session, cID)
+            examsID, uploadsID, finalid = fetch_groups(session, cID)
             # pairs with course_id, group_id
             uploads = fetch_uploads(session, uploadsID) 
-            exams = fetch_exams(session, [examsID, altsID, finalid])
+            exams = fetch_exams(session, [examsID, finalid])
 
     allnames = [{'sid': stu['id'], 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(str(s[k]) for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
