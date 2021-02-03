@@ -226,7 +226,7 @@ def print_reports(reports):
     studs = [studict[stuid] for stuid in reports]
     for tch in sorted_teachers():
         print(tch['name'])
-        for sec in sorted([sec[1] for sec in tch['sections']]):
+        for sec in sorted([sec[2] for sec in tch['sections']]):
             secstuds = [stu for stu in studs if stu['section'] == sec]
             for stu in sorted(secstuds, key=itemgetter('sortable_name')):
                 pop_print_report(reports, stu)

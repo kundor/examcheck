@@ -265,7 +265,7 @@ def confirm_sections(sectch, teachers):
             continue
         oldteacher = next(t for t in teachers if t['name'] == sectch[secnum])
         newteacher = next(t for t in teachers if t['name'] == newname)
-        thesection = next(sec for sec in oldteacher['sections'] if sec[1] == secnum)
+        thesection = next(sec for sec in oldteacher['sections'] if sec[2] == secnum)
         oldteacher['sections'].remove(thesection)
         newteacher['sections'].append(thesection)
 
@@ -303,13 +303,13 @@ def fetch_teachers(session):
     teachers = []
     for tch in get_enrolled(session, 'teacher'):
         try:
-            thesections = sorted(([ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(1))
+            thesections = sorted(([ee['course_id'], ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(2))
             teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': thesections}]
         except KeyError:
             print('Problem with record:', tch)
 
     restrict_boo(teachers)
-    sectch = {sec[1]: tch['name'] for tch in teachers for sec in tch['sections']}
+    sectch = {sec[2]: tch['name'] for tch in teachers for sec in tch['sections']}
     confirm_sections(sectch, teachers)
 
     teacherdat = json.dumps(teachers, indent=2).replace('{\n    "id"', '{ "id"')
@@ -322,6 +322,7 @@ def fetch_students(session):
     stuen = get_enrolled(session, 'student')
     keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
     studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
+                       course_id=stu['enrollments'][0]['course_id'],
                        **{k: stu[k] for k in keys}) for stu in stuen]
     diffwrite('students.json', studentinf)
     return studentinf
@@ -423,7 +424,7 @@ if __name__ == '__main__':
     allnamestr = '\n'.join('\t'.join(str(s[k]) for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
     diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
 
-    instsec = [{'name': tch['name'], 'sections': sorted(sec[1] for sec in tch['sections'])} for tch in teachers]
+    instsec = [{'name': tch['name'], 'sections': sorted(sec[2] for sec in tch['sections'])} for tch in teachers]
     instsecstr = '\n'.join(tch['name'] + '\t' + '\t'.join(tch['sections']) for tch in instsec) + '\n'
     diffwrite('instructor-sections', instsec, instsecstr, loader=TabLoader('name', 'sections', varlength=True))
 
