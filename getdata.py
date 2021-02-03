@@ -301,10 +301,18 @@ def get_overrides(session, courseid, assid):
 
 def fetch_teachers(session):
     teachers = []
-    for tch in get_enrolled(session, 'teacher'):
-        try:
-            thesections = sorted(([ee['course_id'], ee['course_section_id'], ee['sis_section_id'][17:21].rstrip('-')] for ee in tch['enrollments']), key=itemgetter(2))
-            teachers += [{'id': tch['id'], 'name': tch['name'], 'sections': thesections}]
+    rawteach = get_enrolled(session, 'teacher')
+    id_names = {(tch['id'], tch['name']) for tch in rawteach}
+    assert len(id_names) == len({idn[0] for idn in id_names}) == len({idn[1] for idn in id_names}) 
+    for (tID, tname) in id_names:
+        thesections = []
+        for tch in rawteach:
+            if tch['id'] == tID:
+                thesections += [(ee['course_id'],
+                                 ee['course_section_id'],
+                                 ee['sis_section_id'][17:21].rstrip('-')) for ee in tch['enrollments']
+        thesections = sorted(thesections, key=itemgetter(2))
+        teachers += [{'id': tID, 'name': tname, 'sections': thesections}]
         except KeyError:
             print('Problem with record:', tch)
 
