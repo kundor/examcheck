@@ -66,7 +66,7 @@ def alltags(xmlroot):
     return tags
 
 def tagval(tags, key, default='\u2205'):
-    return tags.get(key, default) or ''
+    return tags.get(key, default) or default
 
 def timeform(tags, key):
     """Return given key as a datetime, or the raw string if it can't be parsed"""

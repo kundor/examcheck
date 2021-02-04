@@ -361,6 +361,30 @@ def reportidentical(hasht):
 # I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
 # also re-download uniquecell cluster members.
 
+def converted_info(info1, info2):
+    """Return true if info2 seems to be info1 after XLSX conversion"""
+    return (info1.filename.endswith('xls') and
+            info2.filename == info1.filename + 'x' and
+            abs(info2.modified - info1.modified) == timedelta(hours=7))
+
+def different_info(info1, info2, ignore_fields):
+    replacements = {f: None for f in ignore_fields}
+    if info1.replace(**replacements) == info2.replace(**replacements):
+        return False
+    fields = set(info1.asdict()) - set(ignore_fields)
+    uneq = {f for f in fields if info1.asdict()[f] != info2.asdict()[f]}
+    if uneq == {'filename', 'modified'}:
+        if converted_info(info1, info2):
+            return False
+    if uneq == {'creator'}:
+        if {info1.creator, info2.creator} == {'', 'openpyxl'}:
+            return False
+    if uneq == {'modder'}:
+        if {info1.modder, info2.modder} == {'', '\u2205'}:
+            return False
+    return True
+
+
 if __name__ == '__main__':
     exams, subfiles, origfile, modnum = get_args()
     report = None
@@ -443,7 +467,7 @@ if __name__ == '__main__':
         thecells, theinfo = process_workbook(xlhash, file.name, wb)
         for cval in thecells - origcells:
             cellfiles[cval].append(file.name)
-        if info and info != theinfo.replace(csvhash='', simhash=0):
+        if info and different_info(info, theinfo, ('csvhash', 'simhash')):
             print('different Info:', info, theinfo, file=sys.stderr)
         if info:
             info.csvhash = theinfo.csvhash
