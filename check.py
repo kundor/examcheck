@@ -361,6 +361,9 @@ def reportidentical(hasht):
 # I guess near-dups are found at the end, so re-download cluster members after comparing simhashes?
 # also re-download uniquecell cluster members.
 
+def is_nowish(dt):
+    return abs(datetime.now() - dt.replace(tzinfo=None)) < timedelta(minutes = 20)
+
 def converted_info(info1, info2):
     """Return true if info2 seems to be info1 after XLSX conversion"""
     return (info1.filename.endswith('xls') and
@@ -381,6 +384,9 @@ def different_info(info1, info2, ignore_fields):
             return False
     if uneq == {'modder'}:
         if {info1.modder, info2.modder} == {'', '\u2205'}:
+            return False
+    if uneq == {'modified'}:
+        if info1.modified == '\u2205' and is_nowish(info2.modified):
             return False
     return True
 
