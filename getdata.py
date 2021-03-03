@@ -434,7 +434,7 @@ if __name__ == '__main__':
 
     allnames = [{'sid': stu['id'], 'name': stu['name'], 'section': stu['section']} for stu in studentinf]
     allnamestr = '\n'.join('\t'.join(str(s[k]) for k in ('sid', 'name', 'section')) for s in allnames) + '\n'
-    diffwrite('allnames', allnames, allnamestr, loader=TabLoader('codename', 'name', 'section'))
+    diffwrite('allnames', allnames, allnamestr, loader=TabLoader('sid', 'name', 'section'))
 
     instsec = [{'name': tch['name'], 'sections': sorted(sec[2] for sec in tch['sections'])} for tch in teachers]
     instsecstr = '\n'.join(tch['name'] + '\t' + '\t'.join(tch['sections']) for tch in instsec) + '\n'
