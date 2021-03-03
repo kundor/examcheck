@@ -100,8 +100,8 @@ def wrapchanged(label, old, new, keys, width):
                 if sorted(old[key]) == sorted(new[key]):
                     continue
             ml = maxlen(old[key], new[key])
-            oldstr += f'{old[key]:{ml}}  '
-            newstr += f'{new[key]:{ml}}  '
+            oldstr += f'{str(old[key]):{ml}}  '
+            newstr += f'{str(new[key]):{ml}}  '
             if old[key] != new[key]:
                 diff = True
     if not diff:
