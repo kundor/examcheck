@@ -274,9 +274,9 @@ def checklink(f):
         reports[stuid].append('Links to ' + links_desc(wb))
         wb.close()
 
-def quickinfos(subfiles):
+def quickinfos(files):
     infos = []
-    for f in filesinzips(subfiles):
+    for f in files:
         xp = xml_props(f)
         if xp:
             xp.xlhash = bsum_mem(f)
@@ -437,7 +437,7 @@ if __name__ == '__main__':
     warnings.filterwarnings('ignore', '.*invalid specification.*', UserWarning, 'openpyxl')
     warnings.filterwarnings('ignore', 'Unknown extension is not supported.*', UserWarning, 'openpyxl')
 
-    infos = quickinfos(subfiles)
+    infos = quickinfos(filesinzips(subfiles))
     for info in infos:
         reportinfo(info, self_created_ok)
     writeout()
