@@ -25,15 +25,16 @@ subfiles = list(Path('~/Downloads').expanduser().glob('submissions*.zip'))
 wm0 = wmdat('orig.xlsx') - 9*60 # Assuming it's for section 009
 gen = filesinzips(subfiles) # so we can resume where we left off
 
-for file in gen:
-    codename, stuid = fileinfo(file.name)
-    stu = studict[stuid]
-    try:
-        wm = wmdat(file)
-        dif = (wm - wm0) / 60
-        dif = (dif // 60)*100 + (dif % 60)
-        sec = int(stu['section'].rstrip('R'))
-        if dif != sec:
-            print(f"File {file.name} stamped {wm}, difference {dif} doesn't match {sec}")
-    except zipfile.BadZipFile:
-        print(f"File {file.name} not a zip file")
+if __name__ == '__main__':
+    for file in gen:
+        codename, stuid = fileinfo(file.name)
+        stu = studict[stuid]
+        try:
+            wm = wmdat(file)
+            dif = (wm - wm0) / 60
+            dif = (dif // 60)*100 + (dif % 60)
+            sec = int(stu['section'].rstrip('R'))
+            if dif != sec:
+                print(f"File {file.name} stamped {wm}, difference {dif} doesn't match {sec}")
+        except zipfile.BadZipFile:
+            print(f"File {file.name} not a zip file")
