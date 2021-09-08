@@ -1,4 +1,4 @@
-Python >= 3.7 # dataclasses
+Python >= 3.7 # for dataclasses
 beautifulsoup4
 colorama
 dateutil
