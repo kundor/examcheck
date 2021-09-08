@@ -440,7 +440,7 @@ if __name__ == '__main__':
     infos = quickinfos(filesinzips(subfiles))
     for info in infos:
         reportinfo(info, self_created_ok)
-    writeout()
+    newmodfile = writeout()
 
     print_reports(reports.copy())
     print('---------------------')
@@ -506,6 +506,9 @@ if __name__ == '__main__':
     rpts = filerpts(cellfiles)
     most_shared(rpts, cellfiles)
     pairs_few(rpts, cellfiles)
+
+    if yesno(f'Replace all-modder with {newmodfile} (preserve username updates)?'):
+        os.replace(newmodfile, basedir() / 'all-modder')
 
     IPython.start_ipython(['--quick', '--no-banner'], user_ns=globals())
 

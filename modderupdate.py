@@ -191,7 +191,7 @@ def writeout(basename='allmod'):
         except FileExistsError:
             n += 1
             continue
-        break
+        return f'{basename}{n}'
 
 if __name__ == '__main__':
     if not os.path.isfile('all-modder') or not os.path.isfile('students.json'):
