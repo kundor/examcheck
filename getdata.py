@@ -326,7 +326,7 @@ def fetch_teachers(session):
 
 def fetch_students(session):
     stuen = get_enrolled(session, 'student')
-    keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
+    keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id', 'email']
     studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
                        course_id=stu['enrollments'][0]['course_id'],
                        **{k: stu[k] for k in keys}) for stu in stuen]
