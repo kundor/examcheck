@@ -326,7 +326,7 @@ def fetch_teachers(session):
 
 def fetch_students(session):
     stuen = get_enrolled(session, 'student')
-    keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id']
+    keys = ['id', 'name', 'sortable_name', 'sis_user_id', 'login_id', 'email']
     studentinf = [dict(section=stu['enrollments'][0]['sis_section_id'][17:21].rstrip('-'),
                        course_id=stu['enrollments'][0]['course_id'],
                        **{k: stu[k] for k in keys}) for stu in stuen]
@@ -371,9 +371,12 @@ def fetch_groups(session):
         examid = askkey(agm, 'Module Exams', 'module exams')
         uploadid = askkey(agm, 'Exam Spreadsheet Uploads', 'spreadsheet uploads')
         finalid = askkey(agm, 'Final Exam', 'the final exam')
-        examIDs.append((courseid, examid))
-        uploadIDs.append((courseid, uploadid))
-        finalIDs.append((courseid, finalid))
+        if examid:
+            examIDs.append((courseid, examid))
+        if uploadid:
+            uploadIDs.append((courseid, uploadid))
+        if finalid:
+            finalIDs.append((courseid, finalid))
         allgroups += assgroups
     diffwrite('groups.json', allgroups)
     return examIDs, uploadIDs, finalIDs
