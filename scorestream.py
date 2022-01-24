@@ -41,7 +41,7 @@ with canvas_session() as s:
             response_date = response.headers['Date']
             gce = response.json()['events']
           for g in gce:
-              sid = g['links']['student']
+              sid = int(g['links']['student'])
               if g['links']['assignment'] in assids and sid in mystuds:
                   thescore = g['grade_after']
                   if sid in scores:
