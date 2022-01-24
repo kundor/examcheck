@@ -381,6 +381,8 @@ def fetch_groups(session):
 def fetch_uploads(session, uploadsIDs):
     uploads = []
     for (cID, gID) in uploadsIDs:
+        if not gID:
+            continue
         rawuploads = get_assignments(session, cID, gID)
         uploads += [{'name': up['name'],
             'id': up['id'],
