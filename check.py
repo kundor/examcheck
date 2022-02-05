@@ -79,7 +79,7 @@ def get_args(argv=sys.argv):
         origfile = Path(argv[-1]).resolve()
     else:
         lastsub = len(argv)
-        origfiles = list((basedir() / 'original').glob(f'Module_{modnum}_*.xlsx'))
+        origfiles = list((basedir() / 'original').glob(f'Module-{modnum}-*.xlsx'))
         orfile = basedir() / 'original' / f'Module{modnum}.xlsx'
         if orfile.exists():
             origfiles += [orfile]
