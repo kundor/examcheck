@@ -2,6 +2,7 @@
 
 import mmap
 import pickle
+import platform
 import subprocess
 from hashlib import blake2b
 from operator import itemgetter
@@ -413,12 +414,13 @@ if __name__ == '__main__':
     else:
         self_created_ok = False
 
-    with suppress(FileExistsError):
-        Path('orig.xlsx').symlink_to(origfile)
-        if len(subfiles) == 1:
-            Path('subs.zip').symlink_to(subfiles[0])
-        if report:
-            Path('report').symlink_to(report)
+    if platform.system() != "Windows":
+        with suppress(FileExistsError):
+            Path('orig.xlsx').symlink_to(origfile)
+            if len(subfiles) == 1:
+                Path('subs.zip').symlink_to(subfiles[0])
+            if report:
+                Path('report').symlink_to(report)
 
     teachers = load_file('teachers.json', json.load)
     origcells, originfo = process_file(origfile)
