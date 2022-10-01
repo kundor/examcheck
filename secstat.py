@@ -5,9 +5,25 @@ if 'DISPLAY' not in os.environ:
 from canvas import *
 from collections import Counter
 
-quizid = 265038
+try:
+    secid = int(sys.argv[1])
+    if len(sys.argv) > 2:
+        quizid = int(sys.argv[2])
+    else:
+        quizid = None
+except (ValueError, IndexError):
+    sys.exit('Arguments must be section ID followed by quiz IDs (integers). SecIDs: ' + str({sid: sections[sid]['shortname'] for sid in secids}))
+
+if not quizid:
+    course_quiz_ids = todays_ids('quiz_id')
+    courseids = {ca[0] for ca in course_quiz_ids}
+    assert len(courseids) == 1
+    courseid = courseids.pop()
+    quizids = {ca[1] for ca in course_quiz_ids}
+    assert len(quizids) == 1
+    quizid = quizids.pop()
+
 ignore_list = []
-secid = 83821
 
 #mysecs = [sections[si] for si in secids]
 mysec = sections[secid]
@@ -31,9 +47,9 @@ mysubs = [sub for sub in subs if sub['user_id'] in mystuds]
 
 statcounts = Counter(s['workflow_state'] for s in subs)
 
-print('Workflow stats (total):')
-for k in statcounts:
-    print(f'{k:>15}: {statcounts[k]}')
+# print('Workflow stats (total):')
+# for k in statcounts:
+#    print(f'{k:>15}: {statcounts[k]}')
 
 mycounts = Counter(s['workflow_state'] for s in mysubs)
 
