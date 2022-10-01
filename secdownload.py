@@ -5,13 +5,18 @@ import shutil
 
 savedir = None
 
-if len(sys.argv) > 1 and not sys.argv[-1].isdecimal():
+if len(sys.argv) > 2 and not sys.argv[-1].isdecimal():
     savedir = sys.argv.pop()
 
 try:
-    assids = [int(arg) for arg in sys.argv[1:]]
+    secid = int(sys.argv[1])
+except (ValueError, IndexError):
+    sys.exit('First argument must be section ID. SecIDs: ' + str({sid: sections[sid]['shortname'] for sid in secids}))
+
+try:
+    assids = [int(arg) for arg in sys.argv[2:]]
 except ValueError:
-    sys.exit('Arguments must be [save directory] followed by upload assignment IDs (integers)')
+    sys.exit('Arguments must be upload assignment IDs (integers) followed by optional [save directory]')
 
 if not assids:
     theuploads = todays_assigns('uploads.json')
@@ -40,7 +45,7 @@ section = sections[secid]
 mystuds = section['students'] # + section1['students']
 studict = {stu['id'] : stu for stu in students}
 dnlds = {}
-weirdids = {357062} # Test Student
+weirdids = {436635} # Test Student
 
 os.makedirs(savedir, exist_ok=True)
 os.chdir(savedir)
