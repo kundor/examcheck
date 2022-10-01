@@ -340,10 +340,18 @@ def fetch_sections(session, studentinf, sectch, studict):
         curl = canvasbase + f'courses/{courseid}/sections'
         with session.get(curl, params={'include[]': 'students'}) as response:
             rj = response.json()
-        sections += [dict(allstudents=[st['id'] for st in rec['students']],
+        for rec in rj:
+            if not rec['students']:
+                continue
+            try:
+                teacher = sectch[rec['name'][10:]]
+            except KeyError:
+                print('Skipping section record', rec)
+                continue
+            sections.append(dict(allstudents=[st['id'] for st in rec['students']],
                      students=sorted(stu['id'] for stu in studentinf if stu['section'] == rec['name'][10:]),
                      teacher=sectch[rec['name'][10:]],
-                     **{k : rec[k] for k in keys}) for rec in rj if rec['students']]
+                     **{k : rec[k] for k in keys}))
     for sec in sections:
         allstus = set(sec['allstudents'])
         secstus = set(sec['students'])
