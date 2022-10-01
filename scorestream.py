@@ -9,10 +9,11 @@ rate = 20 # seconds between requests
 minrest = 5 # wait at least this long (if a request took a long time)
 
 try:
-    courseid = int(sys.argv[1])
+    secid = int(sys.argv[1])
     assids = {int(arg) for arg in sys.argv[2:]}
-except ValueError:
-    sys.exit('Arguments must be course ID followed by assignment IDs (integers)')
+except (ValueError, IndexError):
+    sys.exit('Arguments must be section ID followed by assignment IDs (integers). SecIDs: ' + str({sid: sections[sid]['shortname'] for sid in secids}))
+
 if not assids:
     course_ass_ids = todays_ids('id')
     courseids = {ca[0] for ca in course_ass_ids}
