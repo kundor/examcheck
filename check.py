@@ -307,7 +307,7 @@ def reportinfo(info, self_created_ok=False):
         return
     stu = studict[stuid]
 
-    if info.creation != sec_creat[stu['section']]:
+    if info.creation != originfo.creation:
         if self_created_ok and isinstance(info.creation, datetime) and info.creation > examtime - timedelta(days=9):
             pass
         else:
@@ -424,7 +424,6 @@ if __name__ == '__main__':
 
     teachers = load_file('teachers.json', json.load)
     origcells, originfo = process_file(origfile)
-    sec_creat = {sec['shortname'] : section_createtime(sec['shortname'], originfo.creation.date()) for sec in sections.values()}
 
     cellfiles = defaultdict(list) # map cell_content : files
     grades = fetch_grades([(ex['course_id'], ex['quiz_id']) for ex in exams]) # map student_id : score
