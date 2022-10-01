@@ -17,11 +17,14 @@ if cuser:
 else:
     warnings.warn('Cannot find environment variable CANVASUSER', RuntimeWarning)
 
-COORDINATOR = 'Joseph Timmer'
-# COORDINATOR = 'Elizabeth L. Grulke'
-courseids = [70043, # Math 1112-REMOTE
-             70047] # Math 1112-ONLINE
-#secid = 57825 # 009
+# COORDINATOR = 'Joseph Timmer'
+COORDINATOR = 'Elizabeth L. Grulke'
+courseids = [83979] # MATH 1112-Fall 2022 (F2F)
+courseid = courseids[0]
+secids = [83791, # 613R
+          83820, # 007
+          83821, # 008
+          83800] # 009
 #sectime = Time(11, 30) # section 009 at 11:30
 canvasbase = 'https://canvas.colorado.edu/api/v1/'
 
