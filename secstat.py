@@ -1,4 +1,4 @@
-#!/home/kundor/.local/bin/ipython -i
+#!/usr/bin/python3
 import os
 if 'DISPLAY' not in os.environ:
     os.environ['DISPLAY'] = ':0'
@@ -34,7 +34,6 @@ studict = {stu["id"]: stu for stu in students}
 sesh = canvas_session()
 curl = canvasbase + f'courses/{courseid}/quizzes/{quizid}/submissions'
 
-
 def renew():
     subs = []
     for rj in follow_next(sesh, curl):
@@ -45,12 +44,6 @@ subs = renew()
 
 mysubs = [sub for sub in subs if sub['user_id'] in mystuds]
 
-statcounts = Counter(s['workflow_state'] for s in subs)
-
-# print('Workflow stats (total):')
-# for k in statcounts:
-#    print(f'{k:>15}: {statcounts[k]}')
-
 mycounts = Counter(s['workflow_state'] for s in mysubs)
 
 print('In my sections:')
@@ -58,7 +51,6 @@ for k in mycounts:
     print(f'{k:>15}: {mycounts[k]}')
 
 alpha_list = sorted(mystuds, key=lambda s: studict[s]['sortable_name'])
-big_alpha = sorted((stu['id'] for stu in students), key=lambda s: studict[s]['sortable_name'])
 sub_dict = {sub['user_id'] : sub for sub in subs}
 
 def list_all():
@@ -121,44 +113,8 @@ def just_none():
     print(n, 'total')
     return email_list
 
-elist = just_none()
-tl = [e for e in elist if not any(iname in e for iname in ignore_list)]
-print('; '.join(tl))
+# elist = just_none()
+# tl = [e for e in elist if not any(iname in e for iname in ignore_list)]
+# print('; '.join(tl))
 
-
-def all_not():
-    email_list = []
-    for secid in sections:
-        if secid in secids:
-            continue
-        sec = sections[secid]
-        _, nam = sec['name'].split('-')
-        out = ''
-        for sid in sec['students']:
-            stu = studict[sid]
-            if 'email' in stu:
-                eml = stu['email']
-            else:
-                eml = stu['login_id'] + '@colorado.edu'
-            if sid not in sub_dict:
-                out += f'{stu["name"]:26}  {eml}\n'
-                email_list.append(eml)
-                continue
-            sub = sub_dict[sid]
-            stat = sub['workflow_state']
-            if stat in ('untaken', 'complete'):
-                continue
-            if sub['started_at']:
-                _, start = sub['started_at'].split('T')
-            else:
-                start = '-'*9
-            if sub['end_at']:
-                _, end = sub['end_at'].split('T')
-            else:
-                end = '-'*9
-            out += f'{stu["name"]:26}  {eml}\n'
-            email_list.append(eml)
-        if out:
-            print('*** Section', nam, '***')
-            print(out, end='')
-    return email_list
+list_all()
