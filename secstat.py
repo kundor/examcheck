@@ -56,8 +56,6 @@ sub_dict = {sub['user_id'] : sub for sub in subs}
 def list_all():
     n = 0
     for sid in alpha_list:
-        if n % 30 == 1:
-            input('----More----')
         n += 1
         stu = studict[sid]
         if 'email' in stu:
