@@ -30,7 +30,7 @@ else:
     modnum = assids[0]
 
 if not savedir:
-    savedir = 'mymod' + modnum
+    savedir = 'mymod' + str(modnum)
 print('Saving to', savedir)
 
 rate = 15
