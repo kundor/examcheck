@@ -54,6 +54,7 @@ with canvas_session() as s:
                   print(f"{len(scores):2}. {stuname[sid]}: {thescore}")
 
           response_date = time.strptime(response_date[:-4], '%a, %d %b %Y %H:%M:%S')
+          response_date = time.localtime(time.mktime(response_date) - 1) # one second earlier
           dategot = time.strftime('%Y-%m-%dT%H:%M:%SZ', response_date)
           #time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(start))
           #using local time doesn't work when it's not in sync with Canvas's server time
