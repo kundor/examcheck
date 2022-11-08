@@ -22,7 +22,7 @@ def wmdat(fid):
     return int(stamps[0])
 
 subfiles = list(Path('~/Downloads').expanduser().glob('submissions*.zip'))
-wm0 = wmdat('orig.xlsx') - 9*60 # Assuming it's for section 009
+# wm0 = wmdat('orig.xlsx') - 9*60 # Assuming it's for section 009
 gen = filesinzips(subfiles) # so we can resume where we left off
 
 if __name__ == '__main__':
@@ -31,10 +31,12 @@ if __name__ == '__main__':
         stu = studict[stuid]
         try:
             wm = wmdat(file)
-            dif = (wm - wm0) / 60
-            dif = (dif // 60)*100 + (dif % 60)
-            sec = int(stu['section'].rstrip('R'))
-            if dif != sec:
-                print(f"File {file.name} stamped {wm}, difference {dif} doesn't match {sec}")
+            # dif = (wm - wm0) / 60
+            # dif = (dif // 60)*100 + (dif % 60)
+            # sec = int(stu['section'].rstrip('R'))
+            #if dif != sec:
+            #    print(f"File {file.name} stamped {wm}, difference {dif} doesn't match {sec}")
+            if wm:
+                print(f"File {file.name} has stamp {wm}")
         except zipfile.BadZipFile:
             print(f"File {file.name} not a zip file")
