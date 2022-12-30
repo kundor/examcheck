@@ -47,7 +47,7 @@ done
 for f in *xlsx; do
     if istempfile "$f"; then
         reportline "$f" "$tempmsg"
-        rm "$f"
+        #rm "$f"
     fi
 done
 
