@@ -8,10 +8,10 @@ savedir = None
 if len(sys.argv) > 2 and not sys.argv[-1].isdecimal():
     savedir = sys.argv.pop()
 
-try:
-    secid = int(sys.argv[1])
-except (ValueError, IndexError):
-    sys.exit('First argument must be section ID. SecIDs: ' + str({sid: sections[sid]['shortname'] for sid in secids}))
+#try:
+#    secid = int(sys.argv[1])
+#except (ValueError, IndexError):
+#    sys.exit('First argument must be section ID. SecIDs: ' + str({sid: sections[sid]['shortname'] for sid in secids}))
 
 try:
     assids = [int(arg) for arg in sys.argv[2:]]
@@ -38,11 +38,10 @@ minrest = 5
 
 #curls = [canvasbase + f'sections/{secid1}/assignments/{assid}/submissions',
 #         canvasbase + f'sections/{secid}/assignments/{assid}/submissions']
-curls = [canvasbase + f'sections/{secid}/assignments/{assid}/submissions' for assid in assids]
+curls = [canvasbase + f'sections/{secid}/assignments/{assid}/submissions' for secid in secids for assid in assids]
 
-section = sections[secid]
-#section1 = sections[secid1]
-mystuds = section['students'] # + section1['students']
+sections = [sections[secid] for secid in secids]
+mystuds = sum((section['students'] for section in sections), start=[])
 studict = {stu['id'] : stu for stu in students}
 dnlds = {}
 weirdids = {436635} # Test Student
