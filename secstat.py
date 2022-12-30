@@ -5,30 +5,29 @@ if 'DISPLAY' not in os.environ:
 from canvas import *
 from collections import Counter
 
-try:
-    secid = int(sys.argv[1])
-    if len(sys.argv) > 2:
-        quizid = int(sys.argv[2])
-    else:
-        quizid = None
-except (ValueError, IndexError):
-    sys.exit('Arguments must be section ID followed by quiz IDs (integers). SecIDs: ' + str({sid: sections[sid]['shortname'] for sid in secids}))
+#try:
+#    secid = int(sys.argv[1])
+#    if len(sys.argv) > 2:
+#        quizid = int(sys.argv[2])
+#    else:
+#        quizid = None
+#except (ValueError, IndexError):
+#    sys.exit('Arguments must be section ID followed by quiz IDs (integers). SecIDs: ' + str({sid: sections[sid]['shortname'] for sid in secids}))
 
-if not quizid:
-    course_quiz_ids = todays_ids('quiz_id')
-    courseids = {ca[0] for ca in course_quiz_ids}
-    assert len(courseids) == 1
-    courseid = courseids.pop()
-    quizids = {ca[1] for ca in course_quiz_ids}
-    assert len(quizids) == 1
-    quizid = quizids.pop()
+#if not quizid:
+course_quiz_ids = todays_ids('quiz_id')
+courseids = {ca[0] for ca in course_quiz_ids}
+assert len(courseids) == 1
+courseid = courseids.pop()
+quizids = {ca[1] for ca in course_quiz_ids}
+assert len(quizids) == 1
+quizid = quizids.pop()
 
 ignore_list = []
 
-#mysecs = [sections[si] for si in secids]
-mysec = sections[secid]
-secname = mysec['shortname']
-mystuds = mysec['students']
+mysecs = [sections[si] for si in secids]
+#mysec = sections[secid]
+mystuds = sum((s['students'] for s in mysecs), start=[])
 studict = {stu["id"]: stu for stu in students}
 
 sesh = canvas_session()
@@ -111,8 +110,10 @@ def just_none():
     print(n, 'total')
     return email_list
 
-# elist = just_none()
-# tl = [e for e in elist if not any(iname in e for iname in ignore_list)]
-# print('; '.join(tl))
-
 list_all()
+
+print() 
+
+elist = just_none()
+tl = [e for e in elist if not any(iname in e for iname in ignore_list)]
+print('; '.join(tl))
